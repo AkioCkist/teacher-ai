@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: teacher-ai-backend
+    ports:
+      - "${PORT_BACKEND:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=3000
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - /app/node_modules
+    working_dir: /app
+    command: npm run start:dev
+    restart: unless-stopped
+    networks:
+      - teacher-ai-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: teacher-ai-frontend
+    ports:
+      - "${PORT_FRONTEND:-5173}:5173"
+    environment:
+      - VITE_API_URL=http://localhost:${PORT_BACKEND:-3000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    command: npm run dev -- --host
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - teacher-ai-network
+
+networks:
+  teacher-ai-network:
+    driver: bridge
+
+volumes:
+  data:
