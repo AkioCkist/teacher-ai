@@ -35,10 +35,20 @@ export class EvaluationService {
     // Get lesson content
     const lessonContent = session.lessonContent || 'Lesson plan content';
 
+    let pdfBuffer: Buffer | undefined;
+    if (session.lessonFile && session.lessonFile.endsWith('.pdf')) {
+      try {
+        pdfBuffer = this.storageService.readLessonFile(sessionId, session.lessonFile);
+      } catch (error) {
+        this.logger.warn(`Could not read PDF file for session ${sessionId}`, error);
+      }
+    }
+
     // Generate evaluation from AI
     const aiEvaluation = await this.aiService.evaluateTeaching(
       conversation.messages,
       lessonContent,
+      pdfBuffer,
     );
 
     // Parse AI response

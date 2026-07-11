@@ -45,10 +45,21 @@ export class ChatService {
     };
     conversation.messages.push(userMessage);
 
+    let pdfBuffer: Buffer | undefined;
+    if (session.lessonFile && session.lessonFile.endsWith('.pdf')) {
+      try {
+        pdfBuffer = this.storageService.readLessonFile(sessionId, session.lessonFile);
+      } catch (error) {
+        this.logger.warn(`Could not read PDF file for session ${sessionId}`, error);
+      }
+    }
+
     // Get AI response
     const aiResponse = await this.aiService.generateClassroomResponse(
       conversation.messages,
       teacherMessage,
+      session.lessonContent,
+      pdfBuffer,
     );
 
     // Add AI response to history

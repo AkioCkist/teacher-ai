@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 import { AIServiceException } from '../../common/exceptions/app.exception';
 import { ConversationMessage } from '../../common/interfaces/session.interface';
@@ -45,6 +45,8 @@ Your responses should confirm understanding of the lesson and readiness to begin
 
 Your job is to role-play MULTIPLE elementary school students in a Vietnamese classroom.
 
+CRITICAL LANGUAGE RULE: ALL student responses MUST be written in clean, natural Vietnamese (Tiếng Việt). Do NOT mix in any other language, random characters, or foreign words unless quoting a specific vocabulary term from the lesson.
+
 IMPORTANT RULES:
 1. NEVER answer as an AI assistant or chatbot
 2. ALWAYS respond as 2-4 different students in each response
@@ -58,27 +60,27 @@ For each teacher question or prompt, provide responses from 2-4 randomly selecte
 
 Format each student response EXACTLY like this:
 ---
-**[Student Name]** ([personality type]):
-[Student's response in Vietnamese, appropriate for their personality]
+**[Tên học sinh]** ([kiểu tính cách]):
+[Câu trả lời của học sinh bằng tiếng Việt, phù hợp với tính cách của em]
 ---
 
-Personalities to choose from:
-- Excellent student: Gives correct, detailed answers
-- Good student: Participates actively, mostly correct
-- Average student: Sometimes struggles, tries hard
-- Weak student: Needs guidance and support
-- Shy student: Speaks quietly, hesitantly
-- Inattentive student: Easily distracted, off-topic
-- Understands but can't express: Knows the concept, struggles to articulate
-- Limited vocabulary: Uses simple, basic words
-- Confidently wrong: Gives incorrect answers confidently
-- Random guesser: Guesses without thinking
-- Creative student: Unique, imaginative responses
-- Quiet student: Rarely volunteers, gives short answers
+Tính cách học sinh:
+- Học sinh giỏi: Trả lời đúng, chi tiết
+- Học sinh khá: Tích cực tham gia, thường đúng
+- Học sinh trung bình: Đôi khi gặp khó khăn nhưng cố gắng
+- Học sinh yếu: Cần được hướng dẫn thêm
+- Học sinh nhút nhát: Nói nhỏ, e dè
+- Học sinh mất tập trung: Dễ bị phân tâm, hay nói lạc đề
+- Học sinh hiểu nhưng không diễn đạt được: Hiểu bài nhưng khó nói ra
+- Học sinh vốn từ hạn chế: Dùng từ đơn giản
+- Học sinh tự tin nhưng sai: Trả lời sai một cách tự tin
+- Học sinh đoán mò: Đoán ngẫu nhiên không suy nghĩ
+- Học sinh sáng tạo: Câu trả lời độc đáo, thú vị
+- Học sinh im lặng: Hiếm khi xung phong, câu trả lời ngắn
 
-Make the classroom feel REAL - students interrupt each other, ask questions, show enthusiasm or boredom.
+Hãy khiến lớp học thật SỐNG ĐỘNG - học sinh ngắt lời nhau, đặt câu hỏi, thể hiện hứng thú hoặc buồn chán.
 
-Remember: You are SIMULATING a classroom, NOT providing answers as an AI assistant.`,
+Ghi nhớ: Bạn đang MÔ PHỎNG lớp học, KHÔNG phải trả lời với tư cách AI trợ lý.`,
 
   evaluation: `You are an experienced teacher educator evaluating a student teacher's teaching performance.
 
@@ -108,47 +110,54 @@ Be fair, constructive, and specific. Reference actual interactions from the sess
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private genAI: GoogleGenerativeAI | null = null;
-  private model: ReturnType<GoogleGenerativeAI['getGenerativeModel']> | null = null;
+  private openai: OpenAI | null = null;
+  private modelName: string = 'meta-llama/llama-3.3-70b-instruct:free';
 
   constructor(private configService: ConfigService) {
-    this.initializeGemini();
+    this.initializeOpenRouter();
   }
 
   /**
-   * Initialize Gemini client
+   * Initialize OpenRouter client
    */
-  private initializeGemini(): void {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    const modelName = this.configService.get<string>('GEMINI_MODEL') ?? 'gemini-1.5-flash';
+  private initializeOpenRouter(): void {
+    const apiKey = this.configService.get<string>('OPENROUTER_API_KEY');
+    this.modelName = this.configService.get<string>('OPENROUTER_MODEL') ?? 'meta-llama/llama-3.3-70b-instruct:free';
+    const baseURL = this.configService.get<string>('OPENROUTER_BASE_URL') ?? 'https://openrouter.ai/api/v1';
     
     if (!apiKey) {
-      this.logger.warn('GEMINI_API_KEY not set. AI features will be disabled.');
+      this.logger.warn('OPENROUTER_API_KEY not set. AI features will be disabled.');
       return;
     }
 
     try {
-      this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: modelName });
-      this.logger.log(`Gemini AI initialized successfully with model ${modelName}`);
+      this.openai = new OpenAI({
+        apiKey,
+        baseURL,
+        defaultHeaders: {
+          'HTTP-Referer': 'https://github.com/AkioCkist/teacher-ai',
+          'X-Title': 'Teacher AI',
+        }
+      });
+      this.logger.log(`OpenRouter AI initialized successfully with model ${this.modelName}`);
     } catch (error) {
-      this.logger.error('Failed to initialize Gemini AI', error);
+      this.logger.error('Failed to initialize OpenRouter AI', error);
     }
   }
 
   /**
-   * Ensure Gemini is initialized
+   * Ensure OpenRouter is initialized
    */
   private ensureInitialized(): void {
-    if (!this.model) {
-      throw new AIServiceException('Gemini AI is not initialized. Please check GEMINI_API_KEY.');
+    if (!this.openai) {
+      throw new AIServiceException('OpenRouter AI is not initialized. Please check OPENROUTER_API_KEY.');
     }
   }
 
   /**
    * Process lesson plan and prepare for simulation
    */
-  async processLessonPlan(lessonContent: string): Promise<string> {
+  async processLessonPlan(lessonContent: string, pdfBuffer?: Buffer): Promise<string> {
     this.ensureInitialized();
 
     try {
@@ -160,9 +169,26 @@ ${lessonContent}
 
 Please confirm your understanding of this lesson plan and your readiness to simulate an elementary school classroom.`;
 
-      const result = await this.model!.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const userContent: any[] = [{ type: 'text', text: prompt }];
+
+      if (pdfBuffer) {
+        userContent.push({
+          type: 'file',
+          file: {
+            filename: 'lesson_plan.pdf',
+            file_data: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+          }
+        });
+      }
+
+      const response = await this.openai!.chat.completions.create({
+        model: this.modelName,
+        messages: [
+          { role: 'user', content: userContent as any }
+        ],
+      });
+
+      return response.choices[0]?.message?.content || '';
     } catch (error) {
       this.logger.error('Failed to process lesson plan', error);
       throw new AIServiceException('Failed to process lesson plan');
@@ -175,6 +201,8 @@ Please confirm your understanding of this lesson plan and your readiness to simu
   async generateClassroomResponse(
     conversationHistory: ConversationMessage[],
     teacherMessage: string,
+    lessonContent?: string,
+    pdfBuffer?: Buffer,
   ): Promise<string> {
     this.ensureInitialized();
 
@@ -187,24 +215,70 @@ Please confirm your understanding of this lesson plan and your readiness to simu
         .map(s => `- ${s.name} (${s.type}): ${s.description}`)
         .join('\n');
 
-      const prompt = `${SYSTEM_PROMPTS.classroomSimulation}
+      const systemPrompt = `${SYSTEM_PROMPTS.classroomSimulation}
 
 The following students are responding this round:
 ${studentContext}
 
-Remember the conversation context and maintain consistency with previous student responses.
+Remember the conversation context and maintain consistency with previous student responses.`;
 
-Conversation history:
-${this.formatConversationHistory(conversationHistory)}
+      const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+        { role: 'system', content: systemPrompt }
+      ];
 
-Teacher's latest message:
-${teacherMessage}
+      const historyMessages = this.mapConversationHistory(conversationHistory);
 
-Now respond as these ${numStudents} students. Use Vietnamese appropriate for elementary school level.`;
+      // If we have a PDF buffer, attach it directly to the very first user message to preserve OCR/formatting
+      if (pdfBuffer) {
+        if (historyMessages.length > 0) {
+          const firstMsg = historyMessages[0];
+          const textContent = typeof firstMsg.content === 'string' ? firstMsg.content : '';
+          firstMsg.content = [
+            { type: 'text', text: textContent },
+            {
+              type: 'file' as any,
+              file: {
+                filename: 'lesson_plan.pdf',
+                file_data: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+              }
+            } as any
+          ] as any;
+        } else {
+          // If there is no history, attach it to the current message
+          messages.push({
+            role: 'user',
+            content: [
+              { type: 'text', text: teacherMessage },
+              {
+                type: 'file' as any,
+                file: {
+                  filename: 'lesson_plan.pdf',
+                  file_data: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+                }
+              } as any
+            ] as any
+          });
+        }
+      }
 
-      const result = await this.model!.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      if (pdfBuffer && historyMessages.length === 0) {
+        // Message is already pushed
+      } else {
+        messages.push(...historyMessages);
+        messages.push({ role: 'user', content: teacherMessage });
+      }
+
+      // If there is no PDF, fallback to injecting extracted text context in the system prompt
+      if (!pdfBuffer && lessonContent) {
+        messages[0].content = `${messages[0].content}\n\nHere is the lesson plan that the teacher is teaching:\n${lessonContent}`;
+      }
+
+      const response = await this.openai!.chat.completions.create({
+        model: this.modelName,
+        messages,
+      });
+
+      return response.choices[0]?.message?.content || '';
     } catch (error) {
       this.logger.error('Failed to generate classroom response', error);
       throw new AIServiceException('Failed to generate classroom response');
@@ -217,16 +291,12 @@ Now respond as these ${numStudents} students. Use Vietnamese appropriate for ele
   async evaluateTeaching(
     conversationHistory: ConversationMessage[],
     lessonContent: string,
+    pdfBuffer?: Buffer,
   ): Promise<string> {
     this.ensureInitialized();
 
     try {
-      const prompt = `${SYSTEM_PROMPTS.evaluation}
-
-Lesson Plan:
-${lessonContent}
-
-Teaching Session Transcript:
+      const prompt = `Teaching Session Transcript:
 ${this.formatConversationHistory(conversationHistory)}
 
 Please provide a comprehensive evaluation in JSON format with the following structure:
@@ -249,9 +319,29 @@ Please provide a comprehensive evaluation in JSON format with the following stru
   "recommendation": "<detailed recommendation for further practice>"
 }`;
 
-      const result = await this.model!.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const userContent: any[] = [{ type: 'text', text: prompt }];
+
+      if (pdfBuffer) {
+        userContent.push({
+          type: 'file',
+          file: {
+            filename: 'lesson_plan.pdf',
+            file_data: `data:application/pdf;base64,${pdfBuffer.toString('base64')}`
+          }
+        });
+      } else {
+        userContent.push({ type: 'text', text: `Lesson Plan:\n${lessonContent}` });
+      }
+
+      const response = await this.openai!.chat.completions.create({
+        model: this.modelName,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPTS.evaluation },
+          { role: 'user', content: userContent as any }
+        ],
+      });
+
+      return response.choices[0]?.message?.content || '';
     } catch (error) {
       this.logger.error('Failed to evaluate teaching', error);
       throw new AIServiceException('Failed to evaluate teaching performance');
@@ -277,5 +367,16 @@ Please provide a comprehensive evaluation in JSON format with the following stru
         return `**${role}**: ${text}`;
       })
       .join('\n\n');
+  }
+
+  /**
+   * Map database message history to OpenAI Chat format
+   */
+  private mapConversationHistory(history: ConversationMessage[]): OpenAI.Chat.ChatCompletionMessageParam[] {
+    return history.map((msg) => {
+      const role = msg.role === 'user' ? 'user' : 'assistant';
+      const content = msg.parts.map((p) => p.text).join('\n');
+      return { role, content };
+    });
   }
 }

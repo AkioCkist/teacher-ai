@@ -62,16 +62,21 @@ GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
-`GEMINI_MODEL` is optional. If you leave it out, the backend falls back to `gemini-1.5-flash`.
+`GEMINI_MODEL` is optional. If you leave it out, the backend falls back to `gemini-2.0-flash`.
 
 4. Start the application:
 ```bash
-docker compose up
+docker compose up --build -d
 ```
 
 5. Open your browser:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:3000/api
+
+6. For waitching log:
+```bash
+docker logs teacher-ai-backend -f
+```
 
 ## Project Structure
 

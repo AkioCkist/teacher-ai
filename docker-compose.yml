@@ -10,7 +10,9 @@ services:
       - "${PORT_BACKEND:-3000}:3000"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/free}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
       - PORT=3000
     volumes:
       - ./backend:/app

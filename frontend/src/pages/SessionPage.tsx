@@ -53,6 +53,15 @@ export default function SessionPage() {
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (message.trim() && !sendMessageMutation.isPending) {
+        sendMessageMutation.mutate(message.trim())
+      }
+    }
+  }
+
   const isLoading = sessionLoading || conversationLoading
 
   if (isLoading) {
@@ -152,9 +161,15 @@ export default function SessionPage() {
               <div className="text-sm font-medium mb-1 opacity-75">
                 {msg.role === 'user' ? 'Teacher' : 'Classroom'}
               </div>
-              <div className="whitespace-pre-wrap">
+              <div className="whitespace-pre-wrap leading-relaxed">
                 {msg.parts.map((part, i) => (
-                  <span key={i}>{part.text}</span>
+                  <span key={i}>
+                    {part.text.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
+                      j % 2 === 1
+                        ? <strong key={j} className="font-semibold">{segment}</strong>
+                        : <span key={j}>{segment}</span>
+                    )}
+                  </span>
                 ))}
               </div>
             </div>
@@ -196,19 +211,28 @@ export default function SessionPage() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-3">
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Ask a question to your students..."
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          disabled={sendMessageMutation.isPending}
-        />
+      <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+        <div className="flex-1 relative">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask a question to your students... (Enter to send, Shift+Enter for new line)"
+            rows={1}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none overflow-hidden"
+            style={{ minHeight: '48px', maxHeight: '160px' }}
+            disabled={sendMessageMutation.isPending}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement
+              target.style.height = 'auto'
+              target.style.height = Math.min(target.scrollHeight, 160) + 'px'
+            }}
+          />
+        </div>
         <button
           type="submit"
           disabled={!message.trim() || sendMessageMutation.isPending}
-          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
         >
           Send
         </button>

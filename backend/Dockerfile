@@ -11,8 +11,8 @@ RUN npm install --legacy-peer-deps
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Build the application (skipped for dev — start:dev uses ts-node)
+# RUN npm run build
 
 # Expose port
 EXPOSE 3000

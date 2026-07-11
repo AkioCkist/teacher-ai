@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { parseOffice } from 'officeparser';
 import { StorageService } from '../storage/storage.service';
 import { AiService } from '../ai/ai.service';
 import { SessionMetadata, SessionStatus } from '../../common/interfaces/session.interface';
@@ -60,7 +61,7 @@ export class SessionService {
       id: sessionId,
       createdAt: new Date().toISOString(),
       status: SessionStatus.READY,
-      provider: 'gemini',
+      provider: 'openrouter',
       lessonFile: lessonFilename,
       lessonContent: lessonContent,
     };
@@ -70,8 +71,18 @@ export class SessionService {
 
     // Process lesson plan with AI
     try {
-      const contentToProcess = lessonContent || this.extractContentFromBuffer(file.buffer, fileExtension);
-      const aiResponse = await this.aiService.processLessonPlan(contentToProcess);
+      const contentToProcess = lessonContent || await this.extractContentFromBuffer(file.buffer, fileExtension);
+      
+      // Save the processed lesson content in session metadata so it is persisted
+      sessionMetadata.lessonContent = contentToProcess;
+      this.storageService.saveSessionMetadata(sessionId, sessionMetadata);
+
+      let pdfBuffer: Buffer | undefined;
+      if (fileExtension === 'pdf') {
+        pdfBuffer = file.buffer;
+      }
+
+      const aiResponse = await this.aiService.processLessonPlan(contentToProcess, pdfBuffer);
       this.logger.log(`Lesson plan processed for session ${sessionId}: ${aiResponse.substring(0, 100)}...`);
     } catch (error) {
       this.logger.error(`Failed to process lesson plan for session ${sessionId}`, error);
@@ -113,12 +124,28 @@ export class SessionService {
 
   /**
    * Extract content from file buffer
-   * Note: For PDF, DOCX, PPTX files, we'll use the Gemini API's file upload
-   * This is a placeholder for text extraction
    */
-  private extractContentFromBuffer(buffer: Buffer, extension: string): string {
-    // For MVP, we'll send the file directly to Gemini
-    // Gemini 1.5 supports direct file processing
-    return `[Binary file content: ${extension}]`;
+  private async extractContentFromBuffer(buffer: Buffer, extension: string): Promise<string> {
+    try {
+      this.logger.log(`Extracting text from uploaded ${extension} file...`);
+      
+      // Parse file buffer using officeparser
+      const parseResult = await parseOffice(buffer, { fileType: extension as any });
+      
+      let text: string;
+      if (typeof parseResult === 'string') {
+        text = parseResult;
+      } else if (parseResult && typeof (parseResult as any).toText === 'function') {
+        text = (parseResult as any).toText();
+      } else {
+        text = String(parseResult);
+      }
+
+      this.logger.log(`Extracted ${text.length} characters from document.`);
+      return text;
+    } catch (error) {
+      this.logger.error(`Failed to extract text from ${extension} file`, error);
+      return `[Failed to extract content from ${extension} file]`;
+    }
   }
 }
