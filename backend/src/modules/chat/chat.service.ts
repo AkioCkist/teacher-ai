@@ -6,6 +6,7 @@ import { SessionService } from '../session/session.service';
 import {
   ConversationHistory,
   ConversationMessage,
+  ParsedStudentResponse,
   SessionStatus,
 } from '../../common/interfaces/session.interface';
 import { ConversationNotFoundException } from '../../common/exceptions/app.exception';
@@ -23,10 +24,14 @@ export class ChatService {
   /**
    * Send a teacher message and get student responses
    */
-  async sendMessage(sessionId: string, teacherMessage: string): Promise<string> {
+  async sendMessage(
+    sessionId: string,
+    teacherMessage: string,
+    replyToStudent?: string,
+  ): Promise<{ rawResponse: string; students: ParsedStudentResponse[] }> {
     // Validate session exists
     const session = this.sessionService.getSession(sessionId);
-    
+
     // Update session status to in_progress
     if (session.status === SessionStatus.READY) {
       this.sessionService.updateSessionStatus(sessionId, SessionStatus.IN_PROGRESS);
@@ -38,10 +43,15 @@ export class ChatService {
       conversation = this.createConversation(sessionId);
     }
 
+    // Prefix message if replying to a specific student
+    const historyMessage = replyToStudent
+      ? `[@${replyToStudent}] ${teacherMessage}`
+      : teacherMessage;
+
     // Add teacher message to history
     const userMessage: ConversationMessage = {
       role: 'user',
-      parts: [{ text: teacherMessage }],
+      parts: [{ text: historyMessage }],
     };
     conversation.messages.push(userMessage);
 
@@ -54,18 +64,35 @@ export class ChatService {
       }
     }
 
-    // Get AI response
-    const aiResponse = await this.aiService.generateClassroomResponse(
+    // Pass active students (if already selected) and replyToStudent to AI
+    const activeStudents = conversation.activeStudents?.length > 0
+      ? conversation.activeStudents
+      : undefined;
+
+    // When replying to a student, include @Name in the message sent to AI
+    // so the latest prompt clearly shows who is being addressed
+    const aiMessage = replyToStudent
+      ? `[@${replyToStudent}] ${teacherMessage}`
+      : teacherMessage;
+
+    const result = await this.aiService.generateClassroomResponse(
       conversation.messages,
-      teacherMessage,
+      aiMessage,
       session.lessonContent,
       pdfBuffer,
+      activeStudents,
+      replyToStudent,
     );
+
+    // Store active students on first response
+    if (!conversation.activeStudents || conversation.activeStudents.length === 0) {
+      conversation.activeStudents = result.activeStudents;
+    }
 
     // Add AI response to history
     const modelMessage: ConversationMessage = {
       role: 'model',
-      parts: [{ text: aiResponse }],
+      parts: [{ text: result.rawResponse }],
     };
     conversation.messages.push(modelMessage);
 
@@ -75,7 +102,7 @@ export class ChatService {
 
     this.logger.debug(`Message added to session ${sessionId}`);
 
-    return aiResponse;
+    return { rawResponse: result.rawResponse, students: result.parsedStudents };
   }
 
   /**
@@ -96,6 +123,7 @@ export class ChatService {
     return {
       sessionId,
       messages: [],
+      activeStudents: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

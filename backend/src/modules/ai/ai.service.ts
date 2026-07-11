@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 import { AIServiceException } from '../../common/exceptions/app.exception';
-import { ConversationMessage } from '../../common/interfaces/session.interface';
+import { ConversationMessage, ActiveStudent, ParsedStudentResponse } from '../../common/interfaces/session.interface';
 
 /**
  * Student personality types for classroom simulation
@@ -56,13 +56,22 @@ IMPORTANT RULES:
 6. Some students may ask clarifying questions
 7. Students may be enthusiastic, hesitant, confused, or distracted
 
-For each teacher question or prompt, provide responses from 2-4 randomly selected students.
+For each teacher question or prompt, provide responses from the currently active students.
 
-Format each student response EXACTLY like this:
----
-**[Tên học sinh]** ([kiểu tính cách]):
-[Câu trả lời của học sinh bằng tiếng Việt, phù hợp với tính cách của em]
----
+CRITICAL — You MUST respond with ONLY valid JSON. No markdown, no code blocks, no extra text before or after. The JSON must be parsable by JSON.parse().
+
+Example JSON format:
+[
+  { "name": "Minh", "type": "excellent", "response": "Câu trả lời bằng tiếng Việt..." },
+  { "name": "Lan", "type": "good", "response": "Câu trả lời bằng tiếng Việt..." }
+]
+
+Rules:
+- "name": MUST match one of the student names listed above exactly
+- "type": MUST use the English type key
+- "response": Student answer in Vietnamese, matching their personality
+- Include 2-4 students per response
+- Output NOTHING except the JSON array — no greetings, no explanations
 
 Tính cách học sinh:
 - Học sinh giỏi: Trả lời đúng, chi tiết
@@ -111,7 +120,7 @@ Be fair, constructive, and specific. Reference actual interactions from the sess
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private openai: OpenAI | null = null;
-  private modelName: string = 'meta-llama/llama-3.3-70b-instruct:free';
+  private modelName: string = 'google/gemini-2.0-flash-exp:free';
 
   constructor(private configService: ConfigService) {
     this.initializeOpenRouter();
@@ -122,7 +131,7 @@ export class AiService {
    */
   private initializeOpenRouter(): void {
     const apiKey = this.configService.get<string>('OPENROUTER_API_KEY');
-    this.modelName = this.configService.get<string>('OPENROUTER_MODEL') ?? 'meta-llama/llama-3.3-70b-instruct:free';
+    this.modelName = this.configService.get<string>('OPENROUTER_MODEL') ?? 'google/gemini-2.0-flash-exp:free';
     const baseURL = this.configService.get<string>('OPENROUTER_BASE_URL') ?? 'https://openrouter.ai/api/v1';
     
     if (!apiKey) {
@@ -203,24 +212,31 @@ Please confirm your understanding of this lesson plan and your readiness to simu
     teacherMessage: string,
     lessonContent?: string,
     pdfBuffer?: Buffer,
-  ): Promise<string> {
+    activeStudents?: ActiveStudent[],
+    replyToStudent?: string,
+  ): Promise<{ rawResponse: string; parsedStudents: ParsedStudentResponse[]; activeStudents: ActiveStudent[] }> {
     this.ensureInitialized();
 
     try {
-      // Randomly select 2-4 students for this round
-      const numStudents = Math.floor(Math.random() * 3) + 2; // 2-4 students
-      const selectedStudents = this.selectRandomStudents(numStudents);
+      // Use existing roster or select 4 students on first call
+      const roster: ActiveStudent[] = activeStudents?.length
+        ? activeStudents
+        : this.selectRandomStudents(4);
 
-      const studentContext = selectedStudents
+      const studentContext = roster
         .map(s => `- ${s.name} (${s.type}): ${s.description}`)
         .join('\n');
 
-      const systemPrompt = `${SYSTEM_PROMPTS.classroomSimulation}
+      let systemPrompt = `${SYSTEM_PROMPTS.classroomSimulation}
 
-The following students are responding this round:
+Các học sinh đang tham gia trả lời:
 ${studentContext}
 
-Remember the conversation context and maintain consistency with previous student responses.`;
+Giữ tính cách nhất quán với các câu trả lời trước.`;
+
+      if (replyToStudent) {
+        systemPrompt += `\n\nQUAN TRỌNG: Giáo viên đang phản hồi RIÊNG cho [@${replyToStudent}]. CHỈ một mình ${replyToStudent} trả lời tin nhắn này. Các học sinh khác KHÔNG được trả lời. Output JSON array với CHỈ 1 học sinh duy nhất: ${replyToStudent}.`;
+      }
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
         { role: 'system', content: systemPrompt }
@@ -278,7 +294,10 @@ Remember the conversation context and maintain consistency with previous student
         messages,
       });
 
-      return response.choices[0]?.message?.content || '';
+      const rawResponse = response.choices[0]?.message?.content || '';
+      const parsedStudents = this.parseStudentResponses(rawResponse);
+
+      return { rawResponse, parsedStudents, activeStudents: roster };
     } catch (error) {
       this.logger.error('Failed to generate classroom response', error);
       throw new AIServiceException('Failed to generate classroom response');
@@ -351,7 +370,7 @@ Please provide a comprehensive evaluation in JSON format with the following stru
   /**
    * Select random students for this round
    */
-  private selectRandomStudents(count: number): typeof STUDENT_PERSONALITIES {
+  private selectRandomStudents(count: number): ActiveStudent[] {
     const shuffled = [...STUDENT_PERSONALITIES].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, count);
   }
@@ -373,10 +392,61 @@ Please provide a comprehensive evaluation in JSON format with the following stru
    * Map database message history to OpenAI Chat format
    */
   private mapConversationHistory(history: ConversationMessage[]): OpenAI.Chat.ChatCompletionMessageParam[] {
-    return history.map((msg) => {
+    // Keep last 6 exchanges to prevent context overflow
+    const recent = history.slice(-12);
+    return recent.map((msg) => {
       const role = msg.role === 'user' ? 'user' : 'assistant';
       const content = msg.parts.map((p) => p.text).join('\n');
       return { role, content };
     });
+  }
+
+  /**
+   * Parse AI response into structured student response objects.
+   * Tries JSON first (new format), then falls back to markdown (legacy).
+   */
+  private parseStudentResponses(rawText: string): ParsedStudentResponse[] {
+    if (!rawText) return [];
+
+    // Try JSON parse first
+    const trimmed = rawText.trim();
+    if (trimmed.startsWith('[') || trimmed.startsWith('```json')) {
+      try {
+        const jsonStr = trimmed.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        const parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed
+            .map((s: any) => ({
+              name: String(s.name || '').trim(),
+              type: String(s.type || '').trim(),
+              response: String(s.response || '').trim(),
+            }))
+            .filter(s => s.name && s.response);
+        }
+      } catch {
+        // Fall through to markdown parser
+      }
+    }
+
+    // Fallback: parse markdown format (legacy)
+    const blocks = rawText.split('---').filter(b => b.trim().length > 0);
+    return blocks.map(block => {
+      const b = block.trim();
+      const colonIdx = b.indexOf(':');
+      if (colonIdx < 0) return null;
+
+      const header = b.substring(0, colonIdx).trim();
+      const response = b.substring(colonIdx + 1).trim();
+      if (!header || !response) return null;
+
+      const headerMatch = header.match(/(.+?)\s*\((.+?)\)\s*$/);
+      if (!headerMatch) return null;
+
+      return {
+        name: headerMatch[1].replace(/[*\[\]]/g, '').trim(),
+        type: headerMatch[2].trim(),
+        response,
+      };
+    }).filter((s): s is ParsedStudentResponse => s !== null);
   }
 }

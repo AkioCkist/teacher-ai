@@ -58,6 +58,12 @@ export interface EvaluationHistory {
   evaluations: EvaluationResult[];
 }
 
+export interface StudentResponse {
+  name: string;
+  type: string;
+  response: string;
+}
+
 /**
  * Upload a lesson plan and create a new session
  */
@@ -102,14 +108,15 @@ export async function getSession(sessionId: string): Promise<SessionMetadata> {
  */
 export async function sendMessage(
   sessionId: string,
-  message: string
-): Promise<{ response: string }> {
+  message: string,
+  replyToStudent?: string,
+): Promise<{ response: string; students: StudentResponse[] }> {
   const response = await fetch(`${API_BASE}/chat/${sessionId}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, replyToStudent }),
   });
 
   if (!response.ok) {

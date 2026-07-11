@@ -8,7 +8,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { ConversationHistory } from '../../common/interfaces/session.interface';
+import { ConversationHistory, ParsedStudentResponse } from '../../common/interfaces/session.interface';
 
 @Controller('chat')
 export class ChatController {
@@ -23,13 +23,14 @@ export class ChatController {
   async sendMessage(
     @Param('sessionId') sessionId: string,
     @Body('message') message: string,
-  ): Promise<{ response: string }> {
+    @Body('replyToStudent') replyToStudent?: string,
+  ): Promise<{ response: string; students: ParsedStudentResponse[] }> {
     if (!message || message.trim().length === 0) {
       throw new Error('Message cannot be empty');
     }
 
-    const response = await this.chatService.sendMessage(sessionId, message);
-    return { response };
+    const result = await this.chatService.sendMessage(sessionId, message, replyToStudent);
+    return { response: result.rawResponse, students: result.students };
   }
 
   /**

@@ -9,6 +9,24 @@ export enum SessionStatus {
 }
 
 /**
+ * Active student in classroom simulation
+ */
+export interface ActiveStudent {
+  name: string;
+  type: string;
+  description: string;
+}
+
+/**
+ * Parsed student response from AI output
+ */
+export interface ParsedStudentResponse {
+  name: string;
+  type: string;
+  response: string;
+}
+
+/**
  * Session metadata stored in session.json
  */
 export interface SessionMetadata {
@@ -34,6 +52,7 @@ export interface ConversationMessage {
 export interface ConversationHistory {
   sessionId: string;
   messages: ConversationMessage[];
+  activeStudents: ActiveStudent[];
   createdAt: string;
   updatedAt: string;
 }
