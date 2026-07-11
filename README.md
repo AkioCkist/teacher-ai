@@ -59,7 +59,10 @@ cp .env.example .env
 3. Add your Gemini API key to `.env`:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
 ```
+
+`GEMINI_MODEL` is optional. If you leave it out, the backend falls back to `gemini-1.5-flash`.
 
 4. Start the application:
 ```bash

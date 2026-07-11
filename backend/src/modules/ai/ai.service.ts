@@ -120,6 +120,7 @@ export class AiService {
    */
   private initializeGemini(): void {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
+    const modelName = this.configService.get<string>('GEMINI_MODEL') ?? 'gemini-1.5-flash';
     
     if (!apiKey) {
       this.logger.warn('GEMINI_API_KEY not set. AI features will be disabled.');
@@ -128,8 +129,8 @@ export class AiService {
 
     try {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      this.logger.log('Gemini AI initialized successfully');
+      this.model = this.genAI.getGenerativeModel({ model: modelName });
+      this.logger.log(`Gemini AI initialized successfully with model ${modelName}`);
     } catch (error) {
       this.logger.error('Failed to initialize Gemini AI', error);
     }
