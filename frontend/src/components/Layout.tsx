@@ -33,10 +33,10 @@ export default function Layout() {
 
             <nav className="flex items-center gap-2">
               <Link to="/" className={linkClass('/')}>
-                Home
+                Trang chủ
               </Link>
               <Link to="/upload" className={linkClass('/upload')}>
-                Upload
+                Tải giáo án
               </Link>
             </nav>
           </div>
@@ -50,7 +50,7 @@ export default function Layout() {
       <footer className="border-t border-gray-200 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-sm text-gray-500">
-            Teacher AI - Virtual Classroom Simulator for Student Teachers
+            Teacher AI - Trình mô phỏng lớp học ảo cho giáo viên tập sự
           </p>
         </div>
       </footer>

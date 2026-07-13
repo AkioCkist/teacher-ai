@@ -30,7 +30,7 @@ export default function UploadPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (!ACCEPTED_TYPES[file.type as keyof typeof ACCEPTED_TYPES]) {
-        alert('Invalid file type. Please upload a PDF, DOCX, or PPTX file.')
+        alert('Định dạng không hợp lệ. Vui lòng tải lên file PDF, DOCX hoặc PPTX.')
         return
       }
       setSelectedFile(file)
@@ -55,7 +55,7 @@ export default function UploadPage() {
     const file = e.dataTransfer.files?.[0]
     if (file) {
       if (!ACCEPTED_TYPES[file.type as keyof typeof ACCEPTED_TYPES]) {
-        alert('Invalid file type. Please upload a PDF, DOCX, or PPTX file.')
+        alert('Định dạng không hợp lệ. Vui lòng tải lên file PDF, DOCX hoặc PPTX.')
         return
       }
       setSelectedFile(file)
@@ -69,15 +69,15 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Lesson Plan</h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Tải lên giáo án</h1>
       <p className="text-gray-600 mb-8">
-        Upload your lesson plan to start a teaching simulation session.
+        Tải lên giáo án của bạn để bắt đầu buổi dạy thực hành.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lesson Plan File
+            File giáo án
           </label>
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -155,17 +155,17 @@ export default function UploadPage() {
                   />
                 </svg>
                 <p className="text-gray-600 mb-2">
-                  Drag and drop your file here, or
+                  Kéo và thả file vào đây, hoặc
                 </p>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="text-primary-600 hover:text-primary-700 font-medium"
                 >
-                  browse files
+                  chọn file
                 </button>
                 <p className="text-sm text-gray-500 mt-2">
-                  Supported formats: PDF, DOCX, PPTX (max 10MB)
+                  Hỗ trợ: PDF, DOCX, PPTX (tối đa 10MB)
                 </p>
               </div>
             )}
@@ -174,14 +174,14 @@ export default function UploadPage() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lesson Content (Optional)
+            Nội dung bài học (Không bắt buộc)
           </label>
           <textarea
             value={lessonContent}
             onChange={(e) => setLessonContent(e.target.value)}
             rows={4}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
-            placeholder="Paste your lesson plan content here for better AI understanding..."
+            placeholder="Dán nội dung giáo án vào đây để AI hiểu rõ hơn..."
           />
         </div>
 
@@ -190,7 +190,7 @@ export default function UploadPage() {
             <p className="text-red-600 text-sm">
               {uploadMutation.error instanceof Error
                 ? uploadMutation.error.message
-                : 'Failed to upload lesson plan. Please try again.'}
+                : 'Tải lên thất bại. Vui lòng thử lại.'}
             </p>
           </div>
         )}
@@ -221,10 +221,10 @@ export default function UploadPage() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Creating Session...
+              Đang tạo buổi học...
             </span>
           ) : (
-            'Start Teaching Session'
+            'Bắt đầu buổi dạy'
           )}
         </button>
       </form>

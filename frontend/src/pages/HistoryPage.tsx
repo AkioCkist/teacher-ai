@@ -30,7 +30,7 @@ export default function HistoryPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          Loading history...
+          Đang tải lịch sử...
         </div>
       </div>
     )
@@ -41,15 +41,15 @@ export default function HistoryPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Conversation History
+            Lịch sử hội thoại
           </h1>
-          <p className="text-gray-500">Session: {sessionId}</p>
+          <p className="text-gray-500">Buổi dạy: {sessionId}</p>
         </div>
         <Link
           to={`/session/${sessionId}`}
           className="text-primary-600 hover:text-primary-700 font-medium"
         >
-          ← Back to Session
+          ← Quay lại lớp học
         </Link>
       </div>
 
@@ -71,23 +71,23 @@ export default function HistoryPage() {
             </svg>
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Conversation Yet
+            Chưa có hội thoại
           </h3>
           <p className="text-gray-500">
-            Start teaching to see your conversation history here.
+            Bắt đầu dạy để xem lịch sử hội thoại tại đây.
           </p>
         </div>
       ) : (
         <div className="space-y-6">
           <div className="bg-gray-50 rounded-lg p-4">
             <p className="text-sm text-gray-600">
-              Total messages: {conversation.messages.length}
+              Tổng số tin nhắn: {conversation.messages.length}
             </p>
             <p className="text-sm text-gray-600">
-              Started: {new Date(conversation.createdAt).toLocaleString()}
+              Bắt đầu: {new Date(conversation.createdAt).toLocaleString()}
             </p>
             <p className="text-sm text-gray-600">
-              Last updated: {new Date(conversation.updatedAt).toLocaleString()}
+              Cập nhật lần cuối: {new Date(conversation.updatedAt).toLocaleString()}
             </p>
           </div>
 
@@ -113,9 +113,9 @@ export default function HistoryPage() {
                   </div>
                   <div>
                     <div className="font-medium text-gray-900">
-                      {msg.role === 'user' ? 'Teacher' : 'Students'}
+                      {msg.role === 'user' ? 'Giáo viên' : 'Học sinh'}
                     </div>
-                    <div className="text-xs text-gray-500">Message #{index + 1}</div>
+                    <div className="text-xs text-gray-500">Tin nhắn #{index + 1}</div>
                   </div>
                 </div>
                 <div className="pl-10">

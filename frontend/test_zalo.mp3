@@ -1,0 +1,8 @@
+<br />
+<b>Warning</b>:  Attempt to read property "error_code" on null in <b>/home/xs679698/xs679698.xsrv.jp/public_html/zalo/index.php</b> on line <b>37</b><br />
+<br />
+<b>Warning</b>:  Attempt to read property "data" on null in <b>/home/xs679698/xs679698.xsrv.jp/public_html/zalo/index.php</b> on line <b>42</b><br />
+<br />
+<b>Warning</b>:  Attempt to read property "url" on null in <b>/home/xs679698/xs679698.xsrv.jp/public_html/zalo/index.php</b> on line <b>42</b><br />
+<br />
+<b>Warning</b>:  readfile(153fb14379930a8877cde332518bbb18.mp3): Failed to open stream: No such file or directory in <b>/home/xs679698/xs679698.xsrv.jp/public_html/zalo/index.php</b> on line <b>74</b><br />

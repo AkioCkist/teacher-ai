@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSession, sendMessage, getConversationHistory, generateEvaluation } from '../lib/api'
+import { getSession, sendMessage, getConversationHistory, generateEvaluation, attachFileToChat } from '../lib/api'
 import type { StudentResponse } from '../lib/api'
 
 /**
@@ -104,14 +104,60 @@ function personalityBadgeColor(type: string): string {
   return 'bg-red-100 text-red-800'
 }
 
+/** Backend TTS endpoint */
+const TTS_API = 'http://localhost:3000/api/tts'
+let ttsAudios: HTMLAudioElement[] = []
+
+/** Stop all playing TTS audio */
+function stopTTS() {
+  ttsAudios.forEach(a => { a.src = ''; a.load() })
+  ttsAudios = []
+}
+
+/** Speak text using backend VoiceRSS proxy. */
+function speakText(text: string): HTMLAudioElement | null {
+  if (!text.trim()) return null
+  stopTTS()
+  const url = `${TTS_API}?text=${encodeURIComponent(text.trim())}`
+  const audio = new Audio(url)
+  ttsAudios.push(audio)
+  audio.onended = () => { ttsAudios = ttsAudios.filter(a => a !== audio) }
+  audio.play().catch(e => console.warn('[TTS] Play error:', e))
+  return audio
+}
+
+/** Queue multiple texts, speak sequentially via backend TTS. */
+function speakQueue(texts: string[], onDone?: () => void) {
+  if (!texts.length) { onDone?.(); return }
+  stopTTS()
+  let i = 0
+  const next = () => {
+    if (i >= texts.length) { onDone?.(); return }
+    const url = `${TTS_API}?text=${encodeURIComponent(texts[i].trim())}`
+    const audio = new Audio(url)
+    ttsAudios.push(audio)
+    audio.onended = () => {
+      ttsAudios = ttsAudios.filter(a => a !== audio)
+      i++; setTimeout(next, 300)
+    }
+    audio.play().catch(() => { i++; setTimeout(next, 100) })
+  }
+  next()
+}
+
+
 export default function SessionPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState('')
   const [replyTarget, setReplyTarget] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [autoTTS, setAutoTTS] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const prevMsgCount = useRef(0)
   const replyRef = useRef<HTMLTextAreaElement>(null)
 
   // Fetch session data
@@ -145,12 +191,51 @@ export default function SessionPage() {
     },
   })
 
+  // File upload mutation
+  const fileUploadMutation = useMutation({
+    mutationFn: ({ file, msg }: { file: File; msg?: string }) =>
+      attachFileToChat(sessionId!, file, msg),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversation', sessionId] })
+      setUploading(false)
+    },
+    onError: () => setUploading(false),
+  })
+
+  // Auto-TTS: speak new student responses when toggle on
+  useEffect(() => {
+    if (!autoTTS || !conversation?.messages?.length) return
+    const msgs = conversation.messages
+    if (msgs.length <= prevMsgCount.current) { prevMsgCount.current = msgs.length; return }
+
+    // New messages arrived — find student responses in last model message
+    const lastMsg = msgs[msgs.length - 1]
+    if (lastMsg.role !== 'model') return
+
+    const fullText = lastMsg.parts.map(p => p.text).join('\n')
+    const students = parseStudentResponses(fullText)
+    if (students.length > 0) {
+      speakQueue(students.map(s => `${s.name} nói: ${s.response}`))
+    }
+
+    prevMsgCount.current = msgs.length
+  }, [conversation?.messages?.length, autoTTS])
+
   // Handle main input submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (message.trim() && !sendMessageMutation.isPending) {
       sendMessageMutation.mutate({ msg: message.trim() })
     }
+  }
+
+  // Handle file upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    fileUploadMutation.mutate({ file, msg: message.trim() || undefined })
+    e.target.value = ''
   }
 
   // Handle reply submit to a specific student
@@ -171,6 +256,11 @@ export default function SessionPage() {
       }
     }
   }
+
+  // TTS for textarea content
+  const handleReadAloud = useCallback(() => {
+    if (message.trim()) speakText(message.trim())
+  }, [message])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -213,7 +303,7 @@ export default function SessionPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          Loading session...
+          Đang tải lớp học...
         </div>
       </div>
     )
@@ -224,24 +314,40 @@ export default function SessionPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Teaching Session</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Lớp học</h1>
           <p className="text-sm text-gray-500">
-            Session ID: {sessionId} • Status: {session?.status || 'Loading...'}
+            Mã buổi: {sessionId} • Trạng thái: {session?.status || 'Đang tải...'}
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Auto TTS toggle */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <span className="text-sm text-gray-600">Tự đọc</span>
+            <div
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                autoTTS ? 'bg-primary-500' : 'bg-gray-300'
+              }`}
+              onClick={() => setAutoTTS(!autoTTS)}
+            >
+              <div
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  autoTTS ? 'translate-x-5' : ''
+                }`}
+              />
+            </div>
+          </label>
           <Link
             to={`/history/${sessionId}`}
             className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            View History
+            Xem lịch sử
           </Link>
           <button
             onClick={() => evaluationMutation.mutate()}
             disabled={evaluationMutation.isPending || !conversation?.messages?.length}
             className="px-4 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {evaluationMutation.isPending ? 'Evaluating...' : 'Get Evaluation'}
+            {evaluationMutation.isPending ? 'Đang đánh giá...' : 'Nhận đánh giá'}
           </button>
         </div>
       </div>
@@ -266,10 +372,10 @@ export default function SessionPage() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Ready to Start Teaching
+              Sẵn sàng bắt đầu dạy
             </h3>
             <p className="text-gray-500">
-              Ask your first question to the classroom to begin the simulation.
+              Hãy đặt câu hỏi đầu tiên cho lớp học để bắt đầu buổi dạy.
             </p>
           </div>
         )}
@@ -280,7 +386,7 @@ export default function SessionPage() {
             return (
               <div key={index} className="flex justify-end animate-fade-in">
                 <div className="max-w-[80%] bg-primary-500 text-white rounded-lg p-4">
-                  <div className="text-sm font-medium mb-1 opacity-75">Teacher</div>
+                  <div className="text-sm font-medium mb-1 opacity-75">Giáo viên</div>
                   <div className="whitespace-pre-wrap leading-relaxed">
                     {msg.parts.map((part, i) => (
                       <span key={i}>
@@ -310,7 +416,7 @@ export default function SessionPage() {
             return (
               <div key={index} className="flex justify-start animate-fade-in">
                 <div className="max-w-[80%] bg-gray-100 text-gray-900 rounded-lg p-4">
-                  <div className="text-sm font-medium mb-1 opacity-75">Classroom</div>
+                  <div className="text-sm font-medium mb-1 opacity-75">Lớp học</div>
                   <div className="whitespace-pre-wrap leading-relaxed">
                     {msg.parts.map((part, i) => (
                       <span key={i}>
@@ -360,6 +466,16 @@ export default function SessionPage() {
                             {personalityLabel(student.type)}
                           </span>
                         </div>
+                        {/* TTS button for each student */}
+                        <button
+                          onClick={() => speakText(student.response)}
+                          className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 transition-colors"
+                          title="Đọc to"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                          </svg>
+                        </button>
                       </div>
 
                       {/* Response text */}
@@ -479,8 +595,23 @@ export default function SessionPage() {
                   />
                 </svg>
                 <span className="text-gray-500 text-sm">
-                  Students are responding...
+                  Học sinh đang trả lời...
                 </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Uploading indicator */}
+        {uploading && (
+          <div className="flex justify-end animate-fade-in">
+            <div className="bg-gray-100 rounded-lg p-3 max-w-[60%]">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Đang tải file lên...
               </div>
             </div>
           </div>
@@ -490,13 +621,20 @@ export default function SessionPage() {
       </div>
 
       {/* Main input */}
-      <form onSubmit={handleSubmit} className="flex gap-3 items-end">
+      <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx,.pptx,.txt"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         <div className="flex-1 relative">
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question to your students... (Enter to send, Shift+Enter for new line)"
+            placeholder="Đặt câu hỏi cho học sinh... (Enter để gửi, Shift+Enter để xuống dòng)"
             rows={1}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none overflow-hidden"
             style={{ minHeight: '48px', maxHeight: '160px' }}
@@ -508,12 +646,36 @@ export default function SessionPage() {
             }}
           />
         </div>
+        {/* File upload button */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={sendMessageMutation.isPending || uploading}
+          className="px-3 py-3 border border-gray-300 text-gray-500 rounded-lg hover:bg-gray-50 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Đính kèm tài liệu"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+        </button>
+        {/* Read aloud button */}
+        <button
+          type="button"
+          onClick={handleReadAloud}
+          disabled={!message.trim()}
+          className="px-3 py-3 border border-gray-300 text-gray-500 rounded-lg hover:bg-gray-50 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Đọc to"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+        </button>
         <button
           type="submit"
           disabled={!message.trim() || sendMessageMutation.isPending}
           className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
         >
-          Send
+          Gửi
         </button>
       </form>
 
@@ -522,7 +684,7 @@ export default function SessionPage() {
           <p className="text-red-600 text-sm">
             {evaluationMutation.error instanceof Error
               ? evaluationMutation.error.message
-              : 'Failed to generate evaluation'}
+              : 'Không thể tạo đánh giá. Vui lòng thử lại.'}
           </p>
         </div>
       )}

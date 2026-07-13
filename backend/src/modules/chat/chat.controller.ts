@@ -6,7 +6,10 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ChatService } from './chat.service';
 import { ConversationHistory, ParsedStudentResponse } from '../../common/interfaces/session.interface';
 
@@ -34,9 +37,28 @@ export class ChatController {
   }
 
   /**
+   * Upload file attachment for current chat session
+   * POST /api/chat/:sessionId/attach
+   */
+  @Post(':sessionId/attach')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @HttpCode(HttpStatus.OK)
+  async attachFile(
+    @Param('sessionId') sessionId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('message') message?: string,
+  ): Promise<{ filename: string; content: string }> {
+    if (!file) {
+      throw new Error('No file uploaded');
+    }
+    return this.chatService.attachFile(sessionId, file, message);
+  }
+
+  /**
    * Get conversation history
    * GET /api/history/:sessionId
    */
+  @Get('history/:sessionId')
   @Get('history/:sessionId')
   async getHistory(
     @Param('sessionId') sessionId: string,

@@ -50,3 +50,12 @@ export class SessionAlreadyExistsException extends HttpException {
     super(`Session with ID "${sessionId}" already exists`, HttpStatus.CONFLICT);
   }
 }
+
+/**
+ * Custom exception for TTS errors
+ */
+export class TTSException extends HttpException {
+  constructor(message: string) {
+    super(`TTS Error: ${message}`, HttpStatus.BAD_REQUEST);
+  }
+}

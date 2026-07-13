@@ -5,11 +5,11 @@ export default function HomePage() {
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Welcome to Teacher AI
+          Chào mừng đến với Teacher AI
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          A virtual classroom simulator that helps student teachers practice
-          their pedagogical skills before entering a real classroom.
+          Trình mô phỏng lớp học ảo giúp giáo viên tập sự rèn luyện kỹ năng
+          sư phạm trước khi bước vào lớp học thực tế.
         </p>
       </div>
 
@@ -31,13 +31,12 @@ export default function HomePage() {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            What is Teacher AI?
+            Teacher AI là gì?
           </h2>
           <p className="text-gray-600">
-            Teacher AI is a virtual classroom simulator powered by Google
-            Gemini. It simulates realistic classroom interactions with
-            elementary school students who have different personalities,
-            abilities, and learning behaviors.
+            Teacher AI là trình mô phỏng lớp học ảo mô phỏng các tương tác
+            thực tế trong lớp học với học sinh tiểu học có nhiều tính cách,
+            khả năng và hành vi học tập khác nhau.
           </p>
         </div>
 
@@ -58,20 +57,19 @@ export default function HomePage() {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            How It Works
+            Cách hoạt động
           </h2>
           <p className="text-gray-600">
-            Upload your lesson plan, then start teaching. The AI will simulate
-            student responses based on your questions and teaching approach.
-            When you're done, request an evaluation of your teaching
-            performance.
+            Tải lên giáo án của bạn, sau đó bắt đầu dạy. AI sẽ mô phỏng phản
+            hồi của học sinh dựa trên câu hỏi và cách giảng dạy của bạn. Khi
+            hoàn tất, hãy yêu cầu đánh giá kết quả giảng dạy của bạn.
           </p>
         </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-8 mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-          Getting Started
+          Hướng dẫn từng bước
         </h2>
         <div className="space-y-4">
           <div className="flex items-start gap-4">
@@ -79,9 +77,9 @@ export default function HomePage() {
               1
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Upload Your Lesson Plan</h3>
+              <h3 className="font-medium text-gray-900">Tải lên giáo án</h3>
               <p className="text-gray-600">
-                Upload a PDF, DOCX, or PPTX file containing your lesson plan.
+                Tải lên file PDF, DOCX hoặc PPTX chứa giáo án của bạn.
               </p>
             </div>
           </div>
@@ -91,10 +89,10 @@ export default function HomePage() {
               2
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Start Teaching</h3>
+              <h3 className="font-medium text-gray-900">Bắt đầu dạy</h3>
               <p className="text-gray-600">
-                Interact with simulated students who respond based on their
-                personalities and your teaching approach.
+                Tương tác với học sinh mô phỏng — các em trả lời dựa trên tính cách
+                riêng và cách giảng dạy của bạn.
               </p>
             </div>
           </div>
@@ -104,10 +102,10 @@ export default function HomePage() {
               3
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Get Evaluated</h3>
+              <h3 className="font-medium text-gray-900">Nhận đánh giá</h3>
               <p className="text-gray-600">
-                Receive feedback on your questioning techniques, classroom
-                management, and overall teaching performance.
+                Nhận phản hồi về kỹ thuật đặt câu hỏi, quản lý lớp học và kết
+                quả giảng dạy tổng thể.
               </p>
             </div>
           </div>
@@ -119,7 +117,7 @@ export default function HomePage() {
           to="/upload"
           className="inline-flex items-center gap-2 bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors"
         >
-          Get Started
+          Bắt đầu ngay
           <svg
             className="w-5 h-5"
             fill="none"

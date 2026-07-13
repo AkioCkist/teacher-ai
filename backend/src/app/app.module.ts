@@ -5,6 +5,7 @@ import { ChatModule } from '../modules/chat/chat.module';
 import { EvaluationModule } from '../modules/evaluation/evaluation.module';
 import { AiModule } from '../modules/ai/ai.module';
 import { StorageModule } from '../modules/storage/storage.module';
+import { TtsModule } from '../modules/tts/tts.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StorageModule } from '../modules/storage/storage.module';
     SessionModule,
     ChatModule,
     EvaluationModule,
+    TtsModule,
   ],
 })
 export class AppModule {}

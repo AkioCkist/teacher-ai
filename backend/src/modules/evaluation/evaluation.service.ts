@@ -108,10 +108,10 @@ export class EvaluationService {
         },
         overallScore: parsed.overallScore || 50,
         passed: parsed.passed || false,
-        strengths: parsed.strengths || ['Unable to evaluate'],
-        weaknesses: parsed.weaknesses || ['Unable to evaluate'],
-        suggestions: parsed.suggestions || ['Please try again'],
-        recommendation: parsed.recommendation || 'No recommendation available',
+        strengths: parsed.strengths || ['Không thể đánh giá'],
+        weaknesses: parsed.weaknesses || ['Không thể đánh giá'],
+        suggestions: parsed.suggestions || ['Vui lòng thử lại'],
+        recommendation: parsed.recommendation || 'Không có đề xuất',
       };
 
       return evaluation;
@@ -135,10 +135,10 @@ export class EvaluationService {
         },
         overallScore: 50,
         passed: false,
-        strengths: ['Participated in teaching simulation'],
-        weaknesses: ['Could not generate detailed evaluation'],
-        suggestions: ['Please try generating evaluation again'],
-        recommendation: 'Unable to generate detailed recommendation due to parsing error.',
+        strengths: ['Đã tham gia buổi dạy mô phỏng'],
+        weaknesses: ['Không thể tạo đánh giá chi tiết'],
+        suggestions: ['Vui lòng thử tạo đánh giá lại'],
+        recommendation: 'Không thể tạo đề xuất chi tiết do lỗi xử lý.',
       };
     }
   }

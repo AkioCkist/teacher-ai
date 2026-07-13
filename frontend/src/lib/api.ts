@@ -84,7 +84,33 @@ export async function uploadLessonPlan(
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(error || 'Failed to upload lesson plan');
+    throw new Error(error || 'Tải lên giáo án thất bại');
+  }
+
+  return response.json();
+}
+
+/**
+ * Attach a file to an ongoing chat session
+ */
+export async function attachFileToChat(
+  sessionId: string,
+  file: File,
+  message?: string,
+): Promise<{ filename: string; content: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (message) {
+    formData.append('message', message);
+  }
+
+  const response = await fetch(`${API_BASE}/chat/${sessionId}/attach`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Đính kèm file thất bại');
   }
 
   return response.json();
@@ -97,7 +123,7 @@ export async function getSession(sessionId: string): Promise<SessionMetadata> {
   const response = await fetch(`${API_BASE}/session/${sessionId}`);
 
   if (!response.ok) {
-    throw new Error('Session not found');
+    throw new Error('Không tìm thấy buổi dạy');
   }
 
   return response.json();
@@ -120,7 +146,7 @@ export async function sendMessage(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to send message');
+    throw new Error('Gửi tin nhắn thất bại');
   }
 
   return response.json();
@@ -135,7 +161,7 @@ export async function getConversationHistory(
   const response = await fetch(`${API_BASE}/chat/history/${sessionId}`);
 
   if (!response.ok) {
-    throw new Error('Conversation not found');
+    throw new Error('Không tìm thấy hội thoại');
   }
 
   return response.json();
@@ -152,7 +178,7 @@ export async function generateEvaluation(
   });
 
   if (!response.ok) {
-    throw new Error('Failed to generate evaluation');
+    throw new Error('Tạo đánh giá thất bại');
   }
 
   return response.json();
@@ -167,7 +193,7 @@ export async function getEvaluationHistory(
   const response = await fetch(`${API_BASE}/evaluate/${sessionId}`);
 
   if (!response.ok) {
-    throw new Error('Evaluation not found');
+    throw new Error('Không tìm thấy đánh giá');
   }
 
   return response.json();

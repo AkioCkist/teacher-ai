@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import * as path from 'path';
+import { parseOffice } from 'officeparser';
 import { StorageService } from '../storage/storage.service';
 import { AiService } from '../ai/ai.service';
 import { SessionService } from '../session/session.service';
@@ -103,6 +105,80 @@ export class ChatService {
     this.logger.debug(`Message added to session ${sessionId}`);
 
     return { rawResponse: result.rawResponse, students: result.parsedStudents };
+  }
+
+  /**
+   * Attach file to chat — save file, extract text, add to conversation
+   */
+  async attachFile(
+    sessionId: string,
+    file: Express.Multer.File,
+    optionalMessage?: string,
+  ): Promise<{ filename: string; content: string }> {
+    const session = this.sessionService.getSession(sessionId);
+
+    // Determine extension
+    const extMap: Record<string, string> = {
+      'application/pdf': 'pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+      'text/plain': 'txt',
+    };
+    const ext = extMap[file.mimetype] || 'bin';
+
+    // Save file
+    const filename = `attachment_${uuidv4().substring(0, 8)}.${ext}`;
+    this.storageService.saveLessonFile(sessionId, filename, file.buffer);
+
+    // Extract text
+    let extractedContent = '';
+    if (ext === 'pdf' || ext === 'docx' || ext === 'pptx') {
+      try {
+        const parseResult = await parseOffice(file.buffer, { fileType: ext as any });
+        extractedContent = typeof parseResult === 'string' ? parseResult : String(parseResult || '');
+      } catch (e) {
+        this.logger.warn(`Failed to extract text from attached ${ext} file`, e);
+        extractedContent = `[Không thể trích xuất nội dung từ ${file.originalname}]`;
+      }
+    } else if (ext === 'txt') {
+      extractedContent = file.buffer.toString('utf-8');
+    }
+
+    // Build user message with file content
+    const header = optionalMessage
+      ? `${optionalMessage}\n\n[Đã đính kèm: ${file.originalname}]`
+      : `[Đã đính kèm tài liệu: ${file.originalname}]`;
+
+    const fullMessage = `${header}\n\nNội dung tài liệu:\n${extractedContent}`;
+
+    const userMessage: ConversationMessage = {
+      role: 'user',
+      parts: [{ text: fullMessage }],
+    };
+
+    // Get or create conversation
+    let conversation = this.storageService.getConversation(sessionId);
+    if (!conversation) {
+      conversation = {
+        sessionId,
+        messages: [],
+        activeStudents: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+    conversation.messages.push(userMessage);
+    conversation.updatedAt = new Date().toISOString();
+    this.storageService.saveConversation(sessionId, conversation);
+
+    // Update session status if ready
+    if (session.status === SessionStatus.READY) {
+      this.sessionService.updateSessionStatus(sessionId, SessionStatus.IN_PROGRESS);
+    }
+
+    this.logger.log(`File ${file.originalname} attached to session ${sessionId}`);
+
+    return { filename: file.originalname, content: extractedContent };
   }
 
   /**

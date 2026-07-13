@@ -32,7 +32,7 @@ export default function EvaluationPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          Loading evaluation...
+          Đang tải đánh giá...
         </div>
       </div>
     )
@@ -42,16 +42,16 @@ export default function EvaluationPage() {
     return (
       <div className="max-w-2xl mx-auto text-center py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-          No Evaluation Found
+          Không tìm thấy đánh giá
         </h1>
         <p className="text-gray-600 mb-6">
-          You haven't completed an evaluation for this session yet.
+          Bạn chưa hoàn thành đánh giá cho buổi dạy này.
         </p>
         <Link
           to={`/session/${sessionId}`}
           className="inline-flex items-center gap-2 bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors"
         >
-          Return to Session
+          Quay lại lớp học
         </Link>
       </div>
     )
@@ -65,29 +65,29 @@ export default function EvaluationPage() {
         : 'text-red-600'
 
   const criteriaLabels: Record<string, string> = {
-    questioningTechniques: 'Questioning Techniques',
-    scaffolding: 'Scaffolding',
-    classroomManagement: 'Classroom Management',
-    encouragement: 'Encouragement',
-    feedbackQuality: 'Feedback Quality',
-    pedagogicalReasoning: 'Pedagogical Reasoning',
-    communication: 'Communication',
-    adaptability: 'Adaptability',
+    questioningTechniques: 'Kỹ thuật đặt câu hỏi',
+    scaffolding: 'Hỗ trợ học sinh',
+    classroomManagement: 'Quản lý lớp học',
+    encouragement: 'Khuyến khích học sinh',
+    feedbackQuality: 'Chất lượng phản hồi',
+    pedagogicalReasoning: 'Lý luận sư phạm',
+    communication: 'Giao tiếp',
+    adaptability: 'Linh hoạt thích ứng',
   }
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Teaching Evaluation</h1>
-          <p className="text-gray-500">Session: {sessionId}</p>
+          <h1 className="text-3xl font-bold text-gray-900">Đánh giá buổi dạy</h1>
+          <p className="text-gray-500">Buổi dạy: {sessionId}</p>
         </div>
         <div className="text-right">
           <div className={`text-5xl font-bold ${scoreColor}`}>
             {latestEvaluation.overallScore}
           </div>
           <div className="text-sm text-gray-500 mt-1">
-            {latestEvaluation.passed ? '✓ Passed' : '✗ Not Passed'}
+            {latestEvaluation.passed ? '✓ Đạt' : '✗ Chưa đạt'}
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function EvaluationPage() {
       {/* Criteria Scores */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Performance Criteria
+          Tiêu chí đánh giá
         </h2>
         <div className="grid md:grid-cols-2 gap-4">
           {Object.entries(latestEvaluation.criteria).map(([key, value]) => (
@@ -121,7 +121,7 @@ export default function EvaluationPage() {
 
       {/* Strengths */}
       <div className="bg-green-50 border border-green-200 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold text-green-900 mb-3">Strengths</h2>
+        <h2 className="text-lg font-semibold text-green-900 mb-3">Điểm mạnh</h2>
         <ul className="space-y-2">
           {latestEvaluation.strengths.map((strength, index) => (
             <li key={index} className="flex items-start gap-2">
@@ -147,7 +147,7 @@ export default function EvaluationPage() {
       {/* Weaknesses */}
       <div className="bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-red-900 mb-3">
-          Areas for Improvement
+          Điểm cần cải thiện
         </h2>
         <ul className="space-y-2">
           {latestEvaluation.weaknesses.map((weakness, index) => (
@@ -173,7 +173,7 @@ export default function EvaluationPage() {
 
       {/* Suggestions */}
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold text-blue-900 mb-3">Suggestions</h2>
+        <h2 className="text-lg font-semibold text-blue-900 mb-3">Gợi ý cải thiện</h2>
         <ul className="space-y-2">
           {latestEvaluation.suggestions.map((suggestion, index) => (
             <li key={index} className="flex items-start gap-2">
@@ -199,7 +199,7 @@ export default function EvaluationPage() {
       {/* Recommendation */}
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-3">
-          Recommendation
+          Đề xuất
         </h2>
         <p className="text-gray-700 leading-relaxed">
           {latestEvaluation.recommendation}
@@ -212,13 +212,13 @@ export default function EvaluationPage() {
           to={`/session/${sessionId}`}
           className="text-primary-600 hover:text-primary-700 font-medium"
         >
-          ← Back to Session
+          ← Quay lại lớp học
         </Link>
         <Link
           to="/upload"
           className="bg-primary-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors"
         >
-          Start New Session
+          Buổi dạy mới
         </Link>
       </div>
     </div>
