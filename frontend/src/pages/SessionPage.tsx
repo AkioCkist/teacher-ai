@@ -327,7 +327,7 @@ export default function SessionPage() {
             to={`/history/${sessionId}`}
             className="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 uppercase tracking-[0.06em]"
           >
-            Lịch sử
+            Lịch sử hội thoại
           </Link>
           <button
             onClick={() => evaluationMutation.mutate()}
