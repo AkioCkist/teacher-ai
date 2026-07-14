@@ -161,7 +161,7 @@ export class AiService {
         baseURL,
         defaultHeaders: {
           'HTTP-Referer': 'https://github.com/AkioCkist/teacher-ai',
-          'X-Title': 'Teacher AI',
+          'X-Title': 'Virtual Class',
         }
       });
       this.logger.log(`OpenRouter AI initialized successfully with model ${this.modelName}`);

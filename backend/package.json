@@ -1,8 +1,8 @@
 {
   "name": "teacher-ai-backend",
   "version": "1.0.0",
-  "description": "Teacher AI Backend - Virtual Classroom Simulator",
-  "author": "Teacher AI Team",
+  "description": "Virtual Class Backend - Virtual Classroom Simulator",
+  "author": "Virtual Class Team",
   "private": true,
   "license": "MIT",
   "scripts": {

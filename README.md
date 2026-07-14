@@ -1,12 +1,12 @@
-# Teacher AI - Virtual Classroom Simulator
+# Virtual Class - Virtual Classroom Simulator
 
 A virtual classroom simulator that helps student teachers practice their pedagogical skills before entering a real classroom. Powered by Google Gemini AI.
 
 ## ⚠️ Important Notice
 
-**Teacher AI is NOT a chatbot, NOT a RAG application, and NOT a document Q&A system.**
+**Virtual Class is NOT a chatbot, NOT a RAG application, and NOT a document Q&A system.**
 
-Teacher AI is a **virtual classroom simulator** where:
+Virtual Class is a **virtual classroom simulator** where:
 - The AI role-plays as multiple elementary school students with different personalities
 - Student teachers practice their teaching skills
 - The AI evaluates teaching performance based on pedagogical criteria

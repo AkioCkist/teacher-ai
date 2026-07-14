@@ -7,8 +7,12 @@ export default function Layout() {
     <div className="h-screen flex flex-col bg-slate-50">
       <header className="h-9 px-3 flex items-center justify-between border-b border-slate-200 bg-white shrink-0">
         <Link to="/" className="flex items-center gap-1.5">
-          <span className="text-[11px] font-bold text-amber-600 tracking-tight">TA</span>
-          <span className="text-[11px] font-medium text-slate-400">Teacher AI</span>
+          <img
+            src="/icon.svg"
+            alt="Virtual Class"
+            className="h-7 w-7"
+          />
+          <span className="text-[11px] font-semibold text-slate-800">Virtual Class</span>
         </Link>
         <nav className="flex items-center gap-4">
           <Link

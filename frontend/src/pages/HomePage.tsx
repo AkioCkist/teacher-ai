@@ -5,7 +5,7 @@ export default function HomePage() {
     <div className="max-w-4xl mx-auto">
       <div className="max-w-lg mx-auto pt-16 pb-12 text-center">
         <h1 className="text-2xl font-semibold text-slate-800 mb-3">
-          Chào mừng đến với Teacher AI
+          Chào mừng đến với Virtual Class
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed">
           Trình mô phỏng lớp học ảo giúp giáo viên tập sự rèn luyện kỹ năng
@@ -21,7 +21,7 @@ export default function HomePage() {
             </svg>
           </div>
           <h2 className="text-base font-semibold text-slate-800 mb-1.5">
-            Teacher AI là gì?
+            Virtual Class là gì?
           </h2>
           <p className="text-sm text-slate-500 leading-relaxed">
             Trình mô phỏng lớp học ảo với học sinh tiểu học có nhiều tính cách,

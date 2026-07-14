@@ -21,7 +21,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Outfit', 'system-ui', 'sans-serif'],
+        sans: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
         mono: ['SF Mono', 'ui-monospace', 'Menlo', 'Consolas', 'monospace'],
       },
       animation: {

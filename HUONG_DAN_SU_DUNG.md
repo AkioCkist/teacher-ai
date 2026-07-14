@@ -1,4 +1,4 @@
-# PHẦN MỀM MÔ PHỎNG LỚP HỌC ẢO — TEACHER AI
+# PHẦN MỀM MÔ PHỎNG LỚP HỌC ẢO — Virtual Class
 
 ## CÁCH SỬ DỤNG
 
