@@ -99,9 +99,9 @@ function personalityBadgeColor(type: string): string {
   const goodTypes = ['excellent', 'good']
   const midTypes = ['average', 'creative', 'understands_cant_express']
   const enType = normalizeType(type)
-  if (goodTypes.includes(enType)) return 'bg-green-100 text-green-800'
-  if (midTypes.includes(enType)) return 'bg-yellow-100 text-yellow-800'
-  return 'bg-red-100 text-red-800'
+  if (goodTypes.includes(enType)) return 'bg-emerald-50 text-emerald-700'
+  if (midTypes.includes(enType)) return 'bg-amber-50 text-amber-700'
+  return 'bg-rose-50 text-rose-700'
 }
 
 /** Backend TTS endpoint */
@@ -286,113 +286,82 @@ export default function SessionPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-gray-600">
-          <svg className="animate-spin w-6 h-6" fill="none" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-          Đang tải lớp học...
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <span className="text-xs text-slate-400 animate-pulse-slow">đang tải...</span>
       </div>
     )
   }
 
   return (
-    <div className="h-[calc(100vh-12rem)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lớp học</h1>
-          <p className="text-sm text-gray-500">
-            Mã buổi: {sessionId} • Trạng thái: {session?.status || 'Đang tải...'}
-          </p>
+    <div className="h-full flex flex-col">
+      {/* Session header bar */}
+      <div className="h-10 px-4 flex items-center justify-between border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <h1 className="text-sm font-semibold text-slate-800 shrink-0">Lớp học</h1>
+          <span className="text-[11px] text-slate-400 truncate hidden sm:inline">
+            • {sessionId}
+          </span>
+          {session?.status && (
+            <span className="text-[11px] text-slate-400 hidden sm:inline">
+              • {session.status === 'IN_PROGRESS' ? 'Đang dạy' : session.status === 'COMPLETED' ? 'Hoàn tất' : session.status === 'READY' ? 'Sẵn sàng' : session.status}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          {/* Auto TTS toggle */}
-          <label className="flex items-center gap-2 cursor-pointer select-none">
-            <span className="text-sm text-gray-600">Tự đọc</span>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+            <span className="text-[11px] font-medium text-slate-400">Tự đọc</span>
             <div
-              className={`relative w-10 h-5 rounded-full transition-colors ${
-                autoTTS ? 'bg-primary-500' : 'bg-gray-300'
+              className={`relative w-7 h-3.5 rounded-sm transition-colors cursor-pointer ${
+                autoTTS ? 'bg-amber-500' : 'bg-slate-200'
               }`}
               onClick={() => setAutoTTS(!autoTTS)}
             >
               <div
-                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  autoTTS ? 'translate-x-5' : ''
+                className={`absolute top-0.5 left-0.5 w-2.5 h-2.5 bg-white transition-transform ${
+                  autoTTS ? 'translate-x-3.5' : ''
                 }`}
               />
             </div>
           </label>
           <Link
             to={`/history/${sessionId}`}
-            className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            className="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 uppercase tracking-[0.06em]"
           >
-            Xem lịch sử
+            Lịch sử
           </Link>
           <button
             onClick={() => evaluationMutation.mutate()}
             disabled={evaluationMutation.isPending || !conversation?.messages?.length}
-            className="px-4 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-2 py-1 text-[11px] font-medium text-amber-600 hover:text-amber-700 uppercase tracking-[0.06em] disabled:text-slate-300 disabled:cursor-not-allowed"
           >
-            {evaluationMutation.isPending ? 'Đang đánh giá...' : 'Nhận đánh giá'}
+            {evaluationMutation.isPending ? 'Đang đánh giá...' : 'Đánh giá'}
           </button>
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-6 pr-2">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {conversation?.messages?.length === 0 && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                className="w-8 h-8 text-primary-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Sẵn sàng bắt đầu dạy
-            </h3>
-            <p className="text-gray-500">
-              Hãy đặt câu hỏi đầu tiên cho lớp học để bắt đầu buổi dạy.
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-xs text-slate-300 font-medium tracking-[0.02em]">
+              Bắt đầu bằng một câu hỏi
             </p>
           </div>
         )}
 
         {conversation?.messages?.map((msg, index) => {
           if (msg.role === 'user') {
-            // Teacher message — render as bubble
+            // Teacher message
             return (
-              <div key={index} className="flex justify-end animate-fade-in">
-                <div className="max-w-[80%] bg-primary-500 text-white rounded-lg p-4">
-                  <div className="text-sm font-medium mb-1 opacity-75">Giáo viên</div>
-                  <div className="whitespace-pre-wrap leading-relaxed">
+              <div key={index} className="flex justify-end animate-in">
+                <div className="max-w-[70%] bg-slate-800 text-white px-3.5 py-2.5 text-sm leading-relaxed">
+                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.06em] mb-1">Giáo viên</div>
+                  <div className="whitespace-pre-wrap">
                     {msg.parts.map((part, i) => (
                       <span key={i}>
                         {part.text.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
                           j % 2 === 1 ? (
-                            <strong key={j} className="font-semibold">
+                            <strong key={j} className="font-semibold text-amber-300">
                               {segment}
                             </strong>
                           ) : (
@@ -407,96 +376,82 @@ export default function SessionPage() {
             )
           }
 
-          // AI / model message — parse into student cards
+          // AI / model message
           const fullText = msg.parts.map(p => p.text).join('\n')
           const students = parseStudentResponses(fullText)
 
-          // Fallback: if no parseable students, show raw text
+          // Fallback: show raw text
           if (students.length === 0) {
             return (
-              <div key={index} className="flex justify-start animate-fade-in">
-                <div className="max-w-[80%] bg-gray-100 text-gray-900 rounded-lg p-4">
-                  <div className="text-sm font-medium mb-1 opacity-75">Lớp học</div>
-                  <div className="whitespace-pre-wrap leading-relaxed">
-                    {msg.parts.map((part, i) => (
-                      <span key={i}>
-                        {part.text.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
-                          j % 2 === 1 ? (
-                            <strong key={j} className="font-semibold">
-                              {segment}
-                            </strong>
-                          ) : (
-                            <span key={j}>{segment}</span>
-                          )
-                        )}
-                      </span>
-                    ))}
-                  </div>
+              <div key={index} className="flex justify-start animate-in">
+                <div className="max-w-[70%] bg-white border border-slate-200 px-3.5 py-2.5 text-sm leading-relaxed text-slate-700">
+                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.06em] mb-1">Lớp học</div>
+                  {msg.parts.map((part, i) => (
+                    <span key={i}>
+                      {part.text.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
+                        j % 2 === 1 ? (
+                          <strong key={j} className="font-semibold text-slate-800">
+                            {segment}
+                          </strong>
+                        ) : (
+                          <span key={j}>{segment}</span>
+                        )
+                      )}
+                    </span>
+                  ))}
                 </div>
               </div>
             )
           }
 
-          // Render each student as a separate card
+          // Render each student as card
           return (
-            <div key={index} className="space-y-3">
+            <div key={index} className="space-y-2">
               {students.map((student, si) => (
-                <div
-                  key={si}
-                  className="flex justify-start animate-fade-in"
-                  style={{ animationDelay: `${si * 80}ms` }}
-                >
+                <div key={si} className="flex justify-start animate-in">
                   <div className="max-w-[85%] w-full">
-                    {/* Student card */}
-                    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                      {/* Card header — name + personality */}
-                      <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold">
+                    <div className="bg-white border border-slate-200">
+                      {/* Card header */}
+                      <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 flex items-center justify-center bg-slate-100 text-slate-500 text-[11px] font-semibold shrink-0">
                             {student.name.charAt(0)}
                           </div>
-                          <span className="font-semibold text-gray-900">
+                          <span className="text-sm font-medium text-slate-800 truncate">
                             {student.name}
                           </span>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${personalityBadgeColor(
-                              student.type
-                            )}`}
-                          >
+                          <span className={`text-[10px] px-1.5 py-0.5 font-medium leading-none shrink-0 ${personalityBadgeColor(student.type)}`}>
                             {personalityLabel(student.type)}
                           </span>
                         </div>
-                        {/* TTS button for each student */}
                         <button
                           onClick={() => speakText(student.response)}
-                          className="p-1.5 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="p-1 text-slate-400 hover:text-amber-600 transition-colors shrink-0"
                           title="Đọc to"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                           </svg>
                         </button>
                       </div>
 
-                      {/* Response text */}
-                      <div className="px-4 py-3">
-                        <div className="whitespace-pre-wrap leading-relaxed text-gray-800 text-sm">
-                          {student.response.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
-                            j % 2 === 1 ? (
-                              <strong key={j} className="font-semibold">
-                                {segment}
-                              </strong>
-                            ) : (
-                              <span key={j}>{segment}</span>
-                            )
-                          )}
-                        </div>
+                      {/* Response */}
+                      <div className="px-3 py-2.5 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                        {student.response.split(/\*\*(.*?)\*\*/g).map((segment, j) =>
+                          j % 2 === 1 ? (
+                            <strong key={j} className="font-semibold text-slate-800">
+                              {segment}
+                            </strong>
+                          ) : (
+                            <span key={j}>{segment}</span>
+                          )
+                        )}
                       </div>
 
                       {/* Reply section */}
-                      <div className="border-t border-gray-100">
+                      <div className="border-t border-slate-100">
                         {replyTarget === student.name ? (
-                          <div className="p-3 bg-gray-50">
+                          <div className="px-3 py-2 bg-slate-50">
                             <textarea
                               ref={replyRef}
                               value={replyText}
@@ -508,9 +463,14 @@ export default function SessionPage() {
                                 }
                               }}
                               placeholder={`Phản hồi ${student.name}...`}
-                              rows={2}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+                              rows={1}
+                              className="w-full px-2.5 py-1.5 border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 resize-none outline-none focus:border-amber-500 bg-white overflow-hidden"
                               disabled={sendMessageMutation.isPending}
+                              onInput={e => {
+                                const target = e.target as HTMLTextAreaElement
+                                target.style.height = 'auto'
+                                target.style.height = Math.min(target.scrollHeight, 160) + 'px'
+                              }}
                             />
                             <div className="flex justify-end gap-2 mt-2">
                               <button
@@ -518,46 +478,30 @@ export default function SessionPage() {
                                   setReplyTarget(null)
                                   setReplyText('')
                                 }}
-                                className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 font-medium"
+                                className="text-[11px] font-medium text-slate-400 hover:text-slate-600 uppercase tracking-[0.06em]"
                                 disabled={sendMessageMutation.isPending}
                               >
                                 Hủy
                               </button>
                               <button
                                 onClick={() => handleReplySubmit(student.name)}
-                                disabled={
-                                  !replyText.trim() || sendMessageMutation.isPending
-                                }
-                                className="px-3 py-1.5 text-xs bg-primary-500 text-white rounded-md font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                disabled={!replyText.trim() || sendMessageMutation.isPending}
+                                className="text-[11px] font-medium text-amber-600 hover:text-amber-700 uppercase tracking-[0.06em] disabled:text-slate-300 disabled:cursor-not-allowed"
                               >
-                                {sendMessageMutation.isPending
-                                  ? 'Đang gửi...'
-                                  : 'Gửi phản hồi'}
+                                {sendMessageMutation.isPending ? 'Đang gửi...' : 'Gửi'}
                               </button>
                             </div>
                           </div>
                         ) : (
                           <button
                             onClick={() => {
-                              setReplyTarget(
-                                replyTarget === student.name ? null : student.name
-                              )
+                              setReplyTarget(replyTarget === student.name ? null : student.name)
                               setReplyText('')
                             }}
-                            className="w-full px-4 py-2 text-left text-xs text-gray-500 hover:text-primary-600 hover:bg-gray-50 font-medium transition-colors flex items-center gap-1.5"
+                            className="w-full px-3 py-1.5 text-left text-[11px] font-medium text-slate-400 hover:text-amber-600 hover:bg-slate-50 transition-colors flex items-center gap-1.5"
                           >
-                            <svg
-                              className="w-3.5 h-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                              />
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                             </svg>
                             Phản hồi {student.name}
                           </button>
@@ -572,116 +516,86 @@ export default function SessionPage() {
         })}
 
         {sendMessageMutation.isPending && (
-          <div className="flex justify-start animate-fade-in">
-            <div className="bg-gray-100 rounded-lg p-4 max-w-[80%]">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="animate-spin w-4 h-4 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
-                <span className="text-gray-500 text-sm">
-                  Học sinh đang trả lời...
-                </span>
-              </div>
+          <div className="flex animate-in">
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 px-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300 animate-pulse-slow" />
+              học sinh đang trả lời...
             </div>
           </div>
         )}
 
-        {/* Uploading indicator */}
         {uploading && (
-          <div className="flex justify-end animate-fade-in">
-            <div className="bg-gray-100 rounded-lg p-3 max-w-[60%]">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Đang tải file lên...
-              </div>
-            </div>
+          <div className="flex animate-in">
+            <span className="text-[11px] text-slate-400 px-1">đang tải file...</span>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Main input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 items-end">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,.docx,.pptx,.txt"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-        <div className="flex-1 relative">
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Đặt câu hỏi cho học sinh... (Enter để gửi, Shift+Enter để xuống dòng)"
-            rows={1}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none overflow-hidden"
-            style={{ minHeight: '48px', maxHeight: '160px' }}
-            disabled={sendMessageMutation.isPending}
-            onInput={e => {
-              const target = e.target as HTMLTextAreaElement
-              target.style.height = 'auto'
-              target.style.height = Math.min(target.scrollHeight, 160) + 'px'
-            }}
-          />
+      {/* Command bar */}
+      <form onSubmit={handleSubmit} className="shrink-0">
+        <div className="border-t border-slate-200 bg-white px-3">
+          <div className="flex items-center gap-2 py-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.pptx,.txt"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={sendMessageMutation.isPending || uploading}
+              className="shrink-0 p-1 text-slate-400 hover:text-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Đính kèm tài liệu"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </button>
+            <span className="text-sm text-amber-600 font-semibold shrink-0 select-none">❯</span>
+            <textarea
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Đặt câu hỏi cho học sinh..."
+              rows={1}
+              className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 outline-none border-0 resize-none py-1 leading-normal"
+              style={{ maxHeight: '120px' }}
+              disabled={sendMessageMutation.isPending}
+              onInput={e => {
+                const target = e.target as HTMLTextAreaElement
+                target.style.height = 'auto'
+                target.style.height = Math.min(target.scrollHeight, 120) + 'px'
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleReadAloud}
+              disabled={!message.trim()}
+              className="shrink-0 p-1 text-slate-400 hover:text-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Đọc to"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </button>
+            <button
+              type="submit"
+              disabled={!message.trim() || sendMessageMutation.isPending}
+              className="shrink-0 px-3 py-1.5 text-xs font-semibold text-amber-600 hover:text-amber-700 uppercase tracking-[0.08em] disabled:text-slate-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Gửi
+            </button>
+          </div>
         </div>
-        {/* File upload button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={sendMessageMutation.isPending || uploading}
-          className="px-3 py-3 border border-gray-300 text-gray-500 rounded-lg hover:bg-gray-50 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Đính kèm tài liệu"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-          </svg>
-        </button>
-        {/* Read aloud button */}
-        <button
-          type="button"
-          onClick={handleReadAloud}
-          disabled={!message.trim()}
-          className="px-3 py-3 border border-gray-300 text-gray-500 rounded-lg hover:bg-gray-50 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Đọc to"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-          </svg>
-        </button>
-        <button
-          type="submit"
-          disabled={!message.trim() || sendMessageMutation.isPending}
-          className="px-6 py-3 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0"
-        >
-          Gửi
-        </button>
       </form>
 
       {evaluationMutation.isError && (
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600 text-sm">
+        <div className="border-t border-red-200 bg-red-50 px-4 py-2 shrink-0">
+          <p className="text-red-600 text-xs">
             {evaluationMutation.error instanceof Error
               ? evaluationMutation.error.message
               : 'Không thể tạo đánh giá. Vui lòng thử lại.'}

@@ -68,22 +68,22 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Tải lên giáo án</h1>
-      <p className="text-gray-600 mb-8">
-        Tải lên giáo án của bạn để bắt đầu buổi dạy thực hành.
+    <div className="max-w-xl mx-auto px-6 py-8">
+      <h1 className="text-lg font-semibold text-slate-800 mb-1">Tải lên giáo án</h1>
+      <p className="text-sm text-slate-500 mb-6">
+        Tải lên giáo án để bắt đầu buổi dạy thực hành.
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             File giáo án
           </label>
           <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            className={`border-2 border-dashed p-6 text-center transition-colors ${
               dragActive
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-300 hover:border-gray-400'
+                ? 'border-amber-500 bg-amber-50'
+                : 'border-slate-300 hover:border-slate-400'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -101,7 +101,7 @@ export default function UploadPage() {
             {selectedFile ? (
               <div className="flex items-center justify-center gap-3">
                 <svg
-                  className="w-8 h-8 text-green-500"
+                  className="w-6 h-6 text-emerald-500 shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -113,58 +113,38 @@ export default function UploadPage() {
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <div className="text-left">
-                  <p className="font-medium text-gray-900">{selectedFile.name}</p>
-                  <p className="text-sm text-gray-500">
+                <div className="text-left text-sm">
+                  <p className="font-medium text-slate-800">{selectedFile.name}</p>
+                  <p className="text-slate-400">
                     {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedFile(null)}
-                  className="ml-4 text-gray-400 hover:text-gray-600"
+                  className="text-slate-400 hover:text-slate-600 shrink-0"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
             ) : (
               <div>
-                <svg
-                  className="w-12 h-12 mx-auto text-gray-400 mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
+                <svg className="w-10 h-10 mx-auto text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p className="text-gray-600 mb-2">
+                <p className="text-sm text-slate-500 mb-2">
                   Kéo và thả file vào đây, hoặc
                 </p>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm font-medium text-amber-600 hover:text-amber-700"
                 >
                   chọn file
                 </button>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-[11px] text-slate-400 mt-2">
                   Hỗ trợ: PDF, DOCX, PPTX (tối đa 10MB)
                 </p>
               </div>
@@ -173,20 +153,20 @@ export default function UploadPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             Nội dung bài học (Không bắt buộc)
           </label>
           <textarea
             value={lessonContent}
             onChange={(e) => setLessonContent(e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
+            className="w-full px-3 py-2 border border-slate-300 text-sm text-slate-700 placeholder:text-slate-400 resize-none outline-none focus:border-amber-500"
             placeholder="Dán nội dung giáo án vào đây để AI hiểu rõ hơn..."
           />
         </div>
 
         {uploadMutation.isError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="border border-red-200 bg-red-50 px-4 py-3">
             <p className="text-red-600 text-sm">
               {uploadMutation.error instanceof Error
                 ? uploadMutation.error.message
@@ -198,28 +178,13 @@ export default function UploadPage() {
         <button
           type="submit"
           disabled={!selectedFile || uploadMutation.isPending}
-          className="w-full bg-primary-500 text-white py-3 rounded-lg font-medium hover:bg-primary-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-full bg-amber-600 text-white py-2.5 text-sm font-medium hover:bg-amber-700 transition-colors disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
         >
           {uploadMutation.isPending ? (
             <span className="flex items-center justify-center gap-2">
-              <svg
-                className="animate-spin w-5 h-5"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
+              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               Đang tạo buổi học...
             </span>

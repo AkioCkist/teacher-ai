@@ -21,6 +21,12 @@ export class TtsController {
     }
 
     const buffer = await this.ttsService.synthesize(text.trim());
+
+    if (!buffer || buffer.length === 0) {
+      res.status(503).json({ error: 'TTS service unavailable' });
+      return;
+    }
+
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.setHeader('Access-Control-Allow-Origin', '*');
