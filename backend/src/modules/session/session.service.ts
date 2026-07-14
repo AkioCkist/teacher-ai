@@ -116,6 +116,19 @@ export class SessionService {
   }
 
   /**
+   * List all sessions with metadata
+   */
+  listSessions(): SessionMetadata[] {
+    const ids = this.storageService.listAllSessions();
+    return ids
+      .map(id => {
+        try { return this.getSession(id); }
+        catch { return null; }
+      })
+      .filter((s): s is SessionMetadata => s !== null);
+  }
+
+  /**
    * Generate unique session ID
    */
   private generateSessionId(): string {

@@ -65,6 +65,16 @@ export function deleteFile(filePath: string): void {
 }
 
 /**
+ * List directories in a given path
+ */
+export function listDirectories(dirPath: string): string[] {
+  if (!fs.existsSync(dirPath)) return [];
+  return fs.readdirSync(dirPath, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+}
+
+/**
  * Read file content
  */
 export function readFileContent(filePath: string): string {

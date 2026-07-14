@@ -35,6 +35,16 @@ export default function Layout() {
           >
             Tải giáo án
           </Link>
+          <Link
+            to="/sessions"
+            className={`text-[11px] font-medium uppercase tracking-[0.08em] ${
+              location.pathname === '/sessions'
+                ? 'text-amber-600'
+                : 'text-slate-400 hover:text-slate-700'
+            }`}
+          >
+            Lịch sử
+          </Link>
         </nav>
       </header>
 

@@ -168,6 +168,19 @@ export async function getConversationHistory(
 }
 
 /**
+ * List all sessions
+ */
+export async function listSessions(): Promise<SessionMetadata[]> {
+  const response = await fetch(`${API_BASE}/session`);
+
+  if (!response.ok) {
+    throw new Error('Không thể tải danh sách buổi học');
+  }
+
+  return response.json();
+}
+
+/**
  * Generate evaluation
  */
 export async function generateEvaluation(

@@ -46,6 +46,15 @@ export class SessionController {
   }
 
   /**
+   * List all sessions
+   * GET /api/session
+   */
+  @Get()
+  async listSessions(): Promise<SessionMetadata[]> {
+    return this.sessionService.listSessions();
+  }
+
+  /**
    * Get session by ID
    * GET /api/session/:sessionId
    */

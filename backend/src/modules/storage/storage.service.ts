@@ -1,3 +1,5 @@
+import * as path from 'path';
+import * as fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import {
   ensureDirectoryExists,
@@ -8,6 +10,7 @@ import {
   fileExists,
   readFileContent,
   writeFileContent,
+  listDirectories,
 } from '../../common/utils/file.util';
 import {
   SessionMetadata,
@@ -125,5 +128,20 @@ export class StorageService {
    */
   getLessonFilePath(sessionId: string, filename: string): string {
     return getSessionFilePath(sessionId, filename);
+  }
+
+  /**
+   * List all session IDs sorted by most recent first
+   */
+  listAllSessions(): string[] {
+    const sessionsDir = getSessionPath('');
+    const dirs = listDirectories(sessionsDir);
+    // Sort by directory creation time (newest first)
+    dirs.sort((a, b) => {
+      const aTime = fs.statSync(path.join(sessionsDir, a)).birthtimeMs;
+      const bTime = fs.statSync(path.join(sessionsDir, b)).birthtimeMs;
+      return bTime - aTime;
+    });
+    return dirs;
   }
 }
