@@ -152,11 +152,13 @@ export default function SessionPage() {
   const queryClient = useQueryClient()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const recognitionRef = useRef<any>(null)
   const [message, setMessage] = useState('')
   const [replyTarget, setReplyTarget] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
   const [autoTTS, setAutoTTS] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const prevMsgCount = useRef(0)
   const replyRef = useRef<HTMLTextAreaElement>(null)
 
@@ -257,10 +259,46 @@ export default function SessionPage() {
     }
   }
 
-  // TTS for textarea content
-  const handleReadAloud = useCallback(() => {
-    if (message.trim()) speakText(message.trim())
-  }, [message])
+  // Speech-to-text: browser mic → fill textarea
+  const handleVoiceInput = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('Trình duyệt không hỗ trợ nhập liệu bằng giọng nói. Vui lòng dùng Chrome hoặc Edge.')
+      return
+    }
+
+    // Stop if already listening
+    if (isListening) {
+      recognitionRef.current?.stop()
+      recognitionRef.current = null
+      setIsListening(false)
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'vi-VN'
+    recognition.continuous = false
+    recognition.interimResults = false
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setMessage(transcript)
+    }
+
+    recognition.onend = () => {
+      recognitionRef.current = null
+      setIsListening(false)
+    }
+
+    recognition.onerror = () => {
+      recognitionRef.current = null
+      setIsListening(false)
+    }
+
+    recognitionRef.current = recognition
+    setIsListening(true)
+    recognition.start()
+  }, [isListening])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -573,14 +611,22 @@ export default function SessionPage() {
             />
             <button
               type="button"
-              onClick={handleReadAloud}
-              disabled={!message.trim()}
-              className="shrink-0 p-1 text-slate-400 hover:text-amber-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Đọc to"
+              onClick={handleVoiceInput}
+              className={`shrink-0 p-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                isListening ? 'text-red-500' : 'text-slate-400 hover:text-amber-600'
+              }`}
+              title={isListening ? 'Nhấn để dừng' : 'Nhập liệu bằng giọng nói'}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
+              {isListening ? (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4a4 4 0 00-4 4v3a4 4 0 008 0V8a4 4 0 00-4-4z" />
+                </svg>
+              )}
             </button>
             <button
               type="submit"
