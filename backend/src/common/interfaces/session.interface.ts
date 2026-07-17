@@ -70,14 +70,17 @@ export interface StudentResponse {
  * Evaluation criteria
  */
 export interface EvaluationCriteria {
-  questioningTechniques: number;
-  scaffolding: number;
-  classroomManagement: number;
-  encouragement: number;
-  feedbackQuality: number;
-  pedagogicalReasoning: number;
-  communication: number;
-  adaptability: number;
+  // Nhóm 1: Khả năng tổ chức phương pháp đàm thoại gợi mở
+  baoQuatCaTheHoa: number;     // Tính bao quát và cá thể hóa
+  tinhKheoLeo: number;         // Tính khéo léo
+  tinhKienNhan: number;        // Tính kiên nhẫn
+  tinhLinhHoat: number;        // Tính linh hoạt
+  tichHopKyNangNgonNgu: number; // Tích hợp kỹ năng sử dụng ngôn ngữ
+  // Nhóm 2: Hệ thống câu hỏi
+  tinhMucDich: number;         // Tính mục đích
+  tinhTuDuy: number;           // Tính tư duy
+  tinhVuaSuc: number;          // Tính vừa sức
+  tinhRoRang: number;          // Tính rõ ràng
 }
 
 /**

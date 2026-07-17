@@ -44,14 +44,17 @@ export default function EvaluationPage() {
         : 'text-rose-600'
 
   const criteriaLabels: Record<string, string> = {
-    questioningTechniques: 'Kỹ thuật đặt câu hỏi',
-    scaffolding: 'Hỗ trợ học sinh',
-    classroomManagement: 'Quản lý lớp học',
-    encouragement: 'Khuyến khích học sinh',
-    feedbackQuality: 'Chất lượng phản hồi',
-    pedagogicalReasoning: 'Lý luận sư phạm',
-    communication: 'Giao tiếp',
-    adaptability: 'Linh hoạt thích ứng',
+    // Nhóm 1: Khả năng tổ chức đàm thoại gợi mở
+    baoQuatCaTheHoa: 'Bao quát & cá thể hóa',
+    tinhKheoLeo: 'Tính khéo léo',
+    tinhKienNhan: 'Tính kiên nhẫn',
+    tinhLinhHoat: 'Tính linh hoạt',
+    tichHopKyNangNgonNgu: 'Tích hợp kỹ năng ngôn ngữ',
+    // Nhóm 2: Hệ thống câu hỏi
+    tinhMucDich: 'Tính mục đích',
+    tinhTuDuy: 'Tính tư duy',
+    tinhVuaSuc: 'Tính vừa sức',
+    tinhRoRang: 'Tính rõ ràng',
   }
 
   return (
