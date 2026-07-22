@@ -1,6 +1,32 @@
 const API_BASE = 'http://localhost:3000/api';
 
 /**
+ * All available personality types for student simulation
+ */
+export const PERSONALITY_TYPES = [
+  { type: 'excellent', label: 'Giỏi', color: 'emerald' },
+  { type: 'good', label: 'Khá', color: 'emerald' },
+  { type: 'average', label: 'Trung bình', color: 'amber' },
+  { type: 'weak', label: 'Yếu', color: 'rose' },
+  { type: 'shy', label: 'Nhút nhát', color: 'rose' },
+  { type: 'inattentive', label: 'Mất tập trung', color: 'rose' },
+  { type: 'understands_cant_express', label: 'Hiểu nhưng khó diễn đạt', color: 'amber' },
+  { type: 'limited_vocabulary', label: 'Vốn từ hạn chế', color: 'rose' },
+  { type: 'confidently_wrong', label: 'Tự tin nhưng sai', color: 'rose' },
+  { type: 'random_guess', label: 'Đoán mò', color: 'rose' },
+  { type: 'creative', label: 'Sáng tạo', color: 'amber' },
+  { type: 'quiet', label: 'Im lặng', color: 'rose' },
+  { type: 'curious', label: 'Tò mò', color: 'amber' },
+  { type: 'competitive', label: 'Cạnh tranh', color: 'rose' },
+  { type: 'careless', label: 'Ẩu', color: 'rose' },
+  { type: 'leader', label: 'Nhóm trưởng', color: 'emerald' },
+  { type: 'visual', label: 'Trực quan', color: 'amber' },
+  { type: 'slow_learner', label: 'Chậm hiểu', color: 'rose' },
+  { type: 'perfectionist', label: 'Cầu toàn', color: 'rose' },
+  { type: 'humorous', label: 'Hài hước', color: 'amber' },
+]
+
+/**
  * API response types
  */
 export interface CreateSessionResponse {
@@ -15,6 +41,7 @@ export interface SessionMetadata {
   provider: string;
   lessonFile: string;
   lessonContent?: string;
+  personalityTypes?: string[];
 }
 
 export interface ConversationMessage {
@@ -25,6 +52,7 @@ export interface ConversationMessage {
 export interface ConversationHistory {
   sessionId: string;
   messages: ConversationMessage[];
+  activeStudents?: Array<{ name: string; type: string; description: string }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,12 +97,17 @@ export interface StudentResponse {
  */
 export async function uploadLessonPlan(
   file: File,
-  lessonContent?: string
+  lessonContent?: string,
+  personalityTypes?: string[]
 ): Promise<CreateSessionResponse> {
   const formData = new FormData();
   formData.append('file', file);
   if (lessonContent) {
     formData.append('lessonContent', lessonContent);
+  }
+  if (personalityTypes) {
+    // Send personalityTypes as JSON string in FormData
+    formData.append('personalityTypes', JSON.stringify(personalityTypes));
   }
 
   const response = await fetch(`${API_BASE}/session`, {
@@ -175,6 +208,26 @@ export async function listSessions(): Promise<SessionMetadata[]> {
 
   if (!response.ok) {
     throw new Error('Không thể tải danh sách buổi học');
+  }
+
+  return response.json();
+}
+
+/**
+ * Update personality types for a session
+ */
+export async function updatePersonalityTypes(
+  sessionId: string,
+  personalityTypes: string[]
+): Promise<SessionMetadata> {
+  const response = await fetch(`${API_BASE}/session/${sessionId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ personalityTypes }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Không thể cập nhật cài đặt');
   }
 
   return response.json();

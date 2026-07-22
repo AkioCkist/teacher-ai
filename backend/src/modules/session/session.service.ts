@@ -34,6 +34,7 @@ export class SessionService {
   async createSession(
     file: Express.Multer.File,
     lessonContent?: string,
+    personalityTypes?: string[],
   ): Promise<SessionMetadata> {
     // Validate file type
     const fileExtension = ALLOWED_FILE_TYPES[file.mimetype as keyof typeof ALLOWED_FILE_TYPES];
@@ -64,6 +65,7 @@ export class SessionService {
       provider: 'openrouter',
       lessonFile: lessonFilename,
       lessonContent: lessonContent,
+      personalityTypes: personalityTypes,
     };
 
     // Save metadata
@@ -111,6 +113,16 @@ export class SessionService {
   updateSessionStatus(sessionId: string, status: SessionStatus): SessionMetadata {
     const session = this.getSession(sessionId);
     session.status = status;
+    this.storageService.saveSessionMetadata(sessionId, session);
+    return session;
+  }
+
+  /**
+   * Update personality types for a session
+   */
+  updatePersonalityTypes(sessionId: string, personalityTypes: string[]): SessionMetadata {
+    const session = this.getSession(sessionId);
+    session.personalityTypes = personalityTypes;
     this.storageService.saveSessionMetadata(sessionId, session);
     return session;
   }

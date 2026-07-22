@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getSession, sendMessage, getConversationHistory, generateEvaluation, attachFileToChat } from '../lib/api'
+import { getSession, sendMessage, getConversationHistory, generateEvaluation, attachFileToChat, updatePersonalityTypes, PERSONALITY_TYPES } from '../lib/api'
 import type { StudentResponse } from '../lib/api'
 
 /**
@@ -70,6 +70,14 @@ const VI_TO_EN: Record<string, string> = {
   'sáng tạo': 'creative',
   'im lặng': 'quiet',
   'hiệu quả': 'excellent',
+  'tò mò': 'curious',
+  'cạnh tranh': 'competitive',
+  'ẩu': 'careless',
+  'nhóm trưởng': 'leader',
+  'trực quan': 'visual',
+  'chậm hiểu': 'slow_learner',
+  'cầu toàn': 'perfectionist',
+  'hài hước': 'humorous',
 }
 
 function normalizeType(type: string): string {
@@ -91,13 +99,21 @@ function personalityLabel(type: string): string {
     random_guess: 'Đoán mò',
     creative: 'Sáng tạo',
     quiet: 'Im lặng',
+    curious: 'Tò mò',
+    competitive: 'Cạnh tranh',
+    careless: 'Ẩu',
+    leader: 'Nhóm trưởng',
+    visual: 'Trực quan',
+    slow_learner: 'Chậm hiểu',
+    perfectionist: 'Cầu toàn',
+    humorous: 'Hài hước',
   }
   return map[normalizeType(type)] || type
 }
 
 function personalityBadgeColor(type: string): string {
-  const goodTypes = ['excellent', 'good']
-  const midTypes = ['average', 'creative', 'understands_cant_express']
+  const goodTypes = ['excellent', 'good', 'leader']
+  const midTypes = ['average', 'creative', 'understands_cant_express', 'curious', 'visual', 'humorous']
   const enType = normalizeType(type)
   if (goodTypes.includes(enType)) return 'bg-emerald-50 text-emerald-700'
   if (midTypes.includes(enType)) return 'bg-amber-50 text-amber-700'
@@ -159,6 +175,8 @@ export default function SessionPage() {
   const [autoTTS, setAutoTTS] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(PERSONALITY_TYPES.map(t => t.type))
   const prevMsgCount = useRef(0)
   const replyRef = useRef<HTMLTextAreaElement>(null)
 
@@ -175,6 +193,13 @@ export default function SessionPage() {
     queryFn: () => getConversationHistory(sessionId!),
     enabled: !!sessionId,
   })
+
+  // Sync selectedTypes when session data loads
+  useEffect(() => {
+    if (session?.personalityTypes?.length) {
+      setSelectedTypes(session.personalityTypes)
+    }
+  }, [session?.personalityTypes])
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -320,6 +345,11 @@ export default function SessionPage() {
     },
   })
 
+  // Persist personality types
+  const personalityMutation = useMutation({
+    mutationFn: (types: string[]) => updatePersonalityTypes(sessionId!, types),
+  })
+
   const isLoading = sessionLoading || conversationLoading
 
   if (isLoading) {
@@ -361,11 +391,21 @@ export default function SessionPage() {
               />
             </div>
           </label>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-1.5 transition-colors ${showSettings ? 'text-amber-600' : 'text-slate-400 hover:text-slate-700'}`}
+            title="Cài đặt học sinh"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
           <Link
             to={`/history/${sessionId}`}
             className="px-2 py-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 uppercase tracking-[0.06em]"
           >
-            Lịch sử hội thoại
+            Lịch sử
           </Link>
           <button
             onClick={() => evaluationMutation.mutate()}
@@ -376,6 +416,71 @@ export default function SessionPage() {
           </button>
         </div>
       </div>
+
+      {showSettings && (
+        <div className="border-b border-slate-200 bg-white px-4 py-3 shrink-0">
+          <div className="max-w-xl mx-auto">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-[0.06em]">Tính cách học sinh</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-400">{selectedTypes.length}/{PERSONALITY_TYPES.length}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const all = selectedTypes.length === PERSONALITY_TYPES.length
+                    setSelectedTypes(all ? [] : PERSONALITY_TYPES.map(t => t.type))
+                  }}
+                  className="text-[10px] font-medium text-amber-600 hover:text-amber-700 uppercase tracking-[0.06em]"
+                >
+                  {selectedTypes.length === PERSONALITY_TYPES.length ? 'Bỏ chọn' : 'Chọn tất cả'}
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {PERSONALITY_TYPES.map(pt => {
+                const sel = selectedTypes.includes(pt.type)
+                const bgColor = pt.color === 'emerald' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                  pt.color === 'amber' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  'bg-rose-50 text-rose-700 border-rose-200'
+                return (
+                  <button
+                    key={pt.type}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTypes(prev =>
+                        prev.includes(pt.type) ? prev.filter(t => t !== pt.type) : [...prev, pt.type]
+                      )
+                    }}
+                    className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium border transition-colors ${
+                      sel ? bgColor : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    {sel && (
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {pt.label}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex justify-end mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  personalityMutation.mutate(selectedTypes)
+                  setShowSettings(false)
+                }}
+                disabled={personalityMutation.isPending}
+                className="px-3 py-1.5 text-xs font-medium bg-amber-600 text-white hover:bg-amber-700 disabled:bg-slate-200 disabled:text-slate-400 transition-colors"
+              >
+                {personalityMutation.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
@@ -390,11 +495,23 @@ export default function SessionPage() {
         {conversation?.messages?.map((msg, index) => {
           if (msg.role === 'user') {
             // Teacher message
+            const teacherText = msg.parts.map(p => p.text).join('\n')
             return (
               <div key={index} className="flex justify-end animate-in">
-                <div className="max-w-[70%] bg-slate-800 text-white px-3.5 py-2.5 text-sm leading-relaxed">
-                  <div className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.06em] mb-1">Giáo viên</div>
-                  <div className="whitespace-pre-wrap">
+                <div className="max-w-[70%] bg-slate-800 text-white text-sm leading-relaxed">
+                  <div className="flex items-center justify-between px-3.5 pt-2.5">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.06em]">Giáo viên</span>
+                    <button
+                      onClick={() => speakText(teacherText)}
+                      className="p-0.5 text-white/100 hover:text-amber-300 transition-colors"
+                      title="Đọc to"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="whitespace-pre-wrap px-3.5 pb-2.5">
                     {msg.parts.map((part, i) => (
                       <span key={i}>
                         {part.text.split(/\*\*(.*?)\*\*/g).map((segment, j) =>

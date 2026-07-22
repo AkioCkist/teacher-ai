@@ -66,16 +66,35 @@ export class ChatService {
       }
     }
 
-    // Pass active students (if already selected) and replyToStudent to AI
-    const activeStudents = conversation.activeStudents?.length > 0
-      ? conversation.activeStudents
-      : undefined;
+    // Determine roster: re-select if personalityTypes changed, else use existing
+    const currentTypes = session.personalityTypes;
+    const hasPersonalityFilter = currentTypes ? currentTypes.length > 0 : false;
+    const existingTypes = conversation.activeStudents?.map(s => s.type) ?? [];
+    const typesChanged = hasPersonalityFilter && existingTypes.length > 0 && (
+      existingTypes.some(t => !currentTypes!.includes(t)) ||
+      currentTypes!.some(t => !existingTypes.includes(t))
+    );
+    const needNewRoster = !conversation.activeStudents?.length || typesChanged;
 
-    // When replying to a student, include @Name in the message sent to AI
-    // so the latest prompt clearly shows who is being addressed
-    const aiMessage = replyToStudent
+    let rosterChanged = false;
+    let activeStudents: { name: string; type: string; description: string }[] | undefined;
+
+    if (needNewRoster) {
+      activeStudents = undefined;
+      rosterChanged = typesChanged;
+    } else {
+      activeStudents = conversation.activeStudents;
+    }
+
+    // Build message — append roster change note if needed
+    let aiMessage = replyToStudent
       ? `[@${replyToStudent}] ${teacherMessage}`
       : teacherMessage;
+
+    if (rosterChanged && currentTypes) {
+      const types = currentTypes.join(', ');
+      aiMessage = `[CẬP NHẬT LỚP HỌC: Thay đổi học sinh. Chỉ sử dụng các loại: ${types}]\n\n${aiMessage}`;
+    }
 
     const result = await this.aiService.generateClassroomResponse(
       conversation.messages,
@@ -84,10 +103,11 @@ export class ChatService {
       pdfBuffer,
       activeStudents,
       replyToStudent,
+      currentTypes,
     );
 
-    // Store active students on first response
-    if (!conversation.activeStudents || conversation.activeStudents.length === 0) {
+    // Store active students after every response (captures roster changes)
+    if (result.activeStudents?.length > 0) {
       conversation.activeStudents = result.activeStudents;
     }
 

@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Param,
   UseInterceptors,
   UploadedFile,
@@ -33,12 +34,20 @@ export class SessionController {
   async createSession(
     @UploadedFile() file: Express.Multer.File,
     @Body('lessonContent') lessonContent?: string,
+    @Body('personalityTypes') personalityTypesRaw?: string,
   ): Promise<{ sessionId: string; status: string }> {
     if (!file) {
       throw new Error('No file uploaded');
     }
 
-    const session = await this.sessionService.createSession(file, lessonContent);
+    // personalityTypes comes as JSON string from FormData
+    let personalityTypes: string[] | undefined;
+    if (personalityTypesRaw) {
+      try { personalityTypes = JSON.parse(personalityTypesRaw); }
+      catch { personalityTypes = undefined; }
+    }
+
+    const session = await this.sessionService.createSession(file, lessonContent, personalityTypes);
     return {
       sessionId: session.id,
       status: session.status,
@@ -63,5 +72,17 @@ export class SessionController {
     @Param('sessionId') sessionId: string,
   ): Promise<SessionMetadata> {
     return this.sessionService.getSession(sessionId);
+  }
+
+  /**
+   * Update personality types
+   * PATCH /api/session/:sessionId
+   */
+  @Patch(':sessionId')
+  async updatePersonalityTypes(
+    @Param('sessionId') sessionId: string,
+    @Body('personalityTypes') personalityTypes: string[],
+  ): Promise<SessionMetadata> {
+    return this.sessionService.updatePersonalityTypes(sessionId, personalityTypes);
   }
 }

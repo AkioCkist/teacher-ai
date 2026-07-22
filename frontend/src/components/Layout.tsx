@@ -43,7 +43,7 @@ export default function Layout() {
                 : 'text-slate-400 hover:text-slate-700'
             }`}
           >
-            Lịch sử
+            Lịch sử hội thoại
           </Link>
         </nav>
       </header>

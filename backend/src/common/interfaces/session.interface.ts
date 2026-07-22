@@ -36,6 +36,7 @@ export interface SessionMetadata {
   provider: string;
   lessonFile: string;
   lessonContent?: string;
+  personalityTypes?: string[];
 }
 
 /**

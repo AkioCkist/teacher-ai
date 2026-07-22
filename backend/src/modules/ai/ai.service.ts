@@ -20,6 +20,15 @@ const STUDENT_PERSONALITIES = [
   { name: 'Ngọc', type: 'random_guess', description: 'a student who often guesses randomly without thinking' },
   { name: 'Phong', type: 'creative', description: 'a creative student who gives unique and imaginative responses' },
   { name: 'Yến', type: 'quiet', description: 'a very quiet student who rarely volunteers to answer' },
+  // New expanded types
+  { name: 'An', type: 'curious', description: 'a curious student who constantly asks questions and wants to know more' },
+  { name: 'Khoa', type: 'competitive', description: 'a competitive student who always wants to answer first and win' },
+  { name: 'Quỳnh', type: 'careless', description: 'a careless student who often makes simple mistakes in answers' },
+  { name: 'Linh', type: 'leader', description: 'a natural leader who summarizes others answers and keeps class organized' },
+  { name: 'Bảo', type: 'visual', description: 'a visual learner who uses drawings and metaphors to explain ideas' },
+  { name: 'Trang', type: 'slow_learner', description: 'a slow learner who needs repetition and extra time to understand' },
+  { name: 'Tú', type: 'perfectionist', description: 'a perfectionist who fears mistakes and hesitates to speak up' },
+  { name: 'Vy', type: 'humorous', description: 'a humorous student who makes jokes and lightens the mood' },
 ];
 
 /**
@@ -102,6 +111,14 @@ Tính cách học sinh:
 - Học sinh đoán mò: Đoán ngẫu nhiên không suy nghĩ
 - Học sinh sáng tạo: Câu trả lời độc đáo, thú vị
 - Học sinh im lặng: Hiếm khi xung phong, câu trả lời ngắn
+- Học sinh tò mò: Hay đặt câu hỏi "tại sao" và muốn khám phá thêm
+- Học sinh cạnh tranh: Luôn muốn trả lời trước và giành điểm
+- Học sinh ẩu: Thường mắc lỗi cơ bản do thiếu cẩn thận
+- Học sinh nhóm trưởng: Biết tổng kết và điều phối câu trả lời
+- Học sinh trực quan: Thích vẽ, dùng hình ảnh và so sánh để giải thích
+- Học sinh chậm hiểu: Cần nhắc lại và thêm thời gian để nắm bài
+- Học sinh cầu toàn: Sợ sai nên ngại phát biểu, hay do dự
+- Học sinh hài hước: Hay pha trò, làm lớp cười, thêm không khí vui vẻ
 
 Hãy khiến lớp học thật SỐNG ĐỘNG - học sinh ngắt lời nhau, đặt câu hỏi, thể hiện hứng thú hoặc buồn chán.
 
@@ -272,14 +289,15 @@ Please confirm your understanding of this lesson plan and your readiness to simu
     pdfBuffer?: Buffer,
     activeStudents?: ActiveStudent[],
     replyToStudent?: string,
+    allowedTypes?: string[],
   ): Promise<{ rawResponse: string; parsedStudents: ParsedStudentResponse[]; activeStudents: ActiveStudent[] }> {
     this.ensureInitialized();
 
     try {
-      // Use existing roster or select 4 students on first call
+      // Use existing roster or select 4 students on first call (filtered by allowedTypes)
       const roster: ActiveStudent[] = activeStudents?.length
         ? activeStudents
-        : this.selectRandomStudents(4);
+        : this.selectRandomStudents(4, allowedTypes);
 
       const studentContext = roster
         .map(s => `- ${s.name} (${s.type}): ${s.description}`)
@@ -429,9 +447,15 @@ Please provide a comprehensive evaluation in JSON format with the following stru
   /**
    * Select random students for this round
    */
-  private selectRandomStudents(count: number): ActiveStudent[] {
-    const shuffled = [...STUDENT_PERSONALITIES].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
+  private selectRandomStudents(count: number, allowedTypes?: string[]): ActiveStudent[] {
+    let pool = STUDENT_PERSONALITIES;
+    if (allowedTypes && allowedTypes.length > 0) {
+      pool = STUDENT_PERSONALITIES.filter(s => allowedTypes.includes(s.type));
+    }
+    // Fallback to all if filter yields nothing
+    if (pool.length === 0) pool = STUDENT_PERSONALITIES;
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, pool.length));
   }
 
   /**
