@@ -21,7 +21,7 @@ export class RenderEngine {
     const app = new PIXI.Application()
     await app.init({
       resizeTo: container,
-      backgroundColor: 0xfffbeb,
+      backgroundColor: 0xf7f6f3,
       antialias: true,
       resolution: window.devicePixelRatio || 1,
       autoDensity: true,

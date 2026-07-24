@@ -49,7 +49,7 @@ export default function PixiClassroomCanvas({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full relative overflow-hidden bg-slate-900 select-none"
+      className="w-full h-full relative overflow-hidden bg-[#f7f6f3] select-none"
     />
   )
 }

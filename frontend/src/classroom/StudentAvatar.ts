@@ -92,34 +92,34 @@ export class StudentAvatar extends PIXI.Container {
       this.handGraphics.visible = false
     }
 
-    // Glow highlight animation (Amber/Orange theme)
+    // Glow highlight (restrained accent)
     this.glowGraphics.clear()
     if (this.student.isSelected) {
-      this.glowGraphics.rect(-45, -55, 90, 100)
-      this.glowGraphics.fill({ color: 0xd97706, alpha: 0.25 })
-      this.glowGraphics.stroke({ color: 0xd97706, width: 3, alpha: 0.9 })
+      this.glowGraphics.rect(-44, -54, 88, 98)
+      this.glowGraphics.fill({ color: 0xd97706, alpha: 0.12 })
+      this.glowGraphics.stroke({ color: 0xd97706, width: 2, alpha: 0.6 })
     } else if (this.student.isSpeaking) {
       this.glowGraphics.rect(-42, -52, 84, 96)
-      this.glowGraphics.fill({ color: 0xf59e0b, alpha: 0.2 })
-      this.glowGraphics.stroke({ color: 0xd97706, width: 2.5, alpha: 0.8 })
+      this.glowGraphics.fill({ color: 0xd97706, alpha: 0.08 })
+      this.glowGraphics.stroke({ color: 0xd97706, width: 1.5, alpha: 0.4 })
     }
   }
 
   private drawAvatar() {
     const style = this.student.avatarStyle
 
-    // 1. Desk & Chair (Warm Amber Wood)
+    // 1. Desk & Chair (Warm Wood)
     this.deskGraphics.clear()
     // Chair back
     this.deskGraphics.roundRect(-22, -15, 44, 25, 4)
-    this.deskGraphics.fill({ color: 0x92400e })
-    // Wooden Desk Top
+    this.deskGraphics.fill({ color: 0x8b7355 })
+    // Warm wooden Desk Top
     this.deskGraphics.roundRect(-36, 12, 72, 28, 6)
-    this.deskGraphics.fill({ color: 0xf59e0b })
-    this.deskGraphics.stroke({ color: 0xd97706, width: 2 })
+    this.deskGraphics.fill({ color: 0xc9ad7a })
+    this.deskGraphics.stroke({ color: 0xba9c65, width: 1.5 })
     // Desk lip
     this.deskGraphics.rect(-34, 35, 68, 4)
-    this.deskGraphics.fill({ color: 0xb45309 })
+    this.deskGraphics.fill({ color: 0xa38460 })
 
     // 2. Student Body (Torso & Shoulders)
     this.bodyGraphics.clear()
@@ -152,14 +152,19 @@ export class StudentAvatar extends PIXI.Container {
     this.headGraphics.quadraticCurveTo(0, -19, 4, -22)
     this.headGraphics.stroke({ color: 0x78350f, width: 1.5 })
 
-    // Hair
-    this.headGraphics.circle(0, -34, 15)
+    // Hair — sits on top of head, never covers eyes
+    const hairTopY = -44  // top of head circle (y=-28 - 16)
+    const hairH = 16      // hair height downward from top
+    this.headGraphics.roundRect(-15, hairTopY, 30, hairH, 8)
     this.headGraphics.fill({ color: style.hairColor })
     if (style.hairStyle === 'spiky') {
-      this.headGraphics.poly([-12, -35, -8, -43, -4, -35, 0, -45, 4, -35, 8, -43, 12, -35])
+      this.headGraphics.poly([-12, hairTopY, -8, hairTopY - 8, -4, hairTopY, 0, hairTopY - 10, 4, hairTopY, 8, hairTopY - 8, 12, hairTopY])
       this.headGraphics.fill({ color: style.hairColor })
     } else if (style.hairStyle === 'long' || style.hairStyle === 'bob') {
-      this.headGraphics.roundRect(-17, -35, 34, 20, 4)
+      // Side hair extending down past ears
+      this.headGraphics.roundRect(-17, hairTopY - 2, 7, hairH + 14, 3)
+      this.headGraphics.fill({ color: style.hairColor })
+      this.headGraphics.roundRect(10, hairTopY - 2, 7, hairH + 14, 3)
       this.headGraphics.fill({ color: style.hairColor })
     }
 
@@ -203,9 +208,9 @@ export class StudentAvatar extends PIXI.Container {
     const width = Math.max(60, nameText.width + padX * 2)
     const height = nameText.height + padY * 2
 
-    labelBg.roundRect(-width / 2, 22, width, height, 6)
+    labelBg.roundRect(-width / 2, 22, width, height, 4)
     labelBg.fill({ color: 0xffffff })
-    labelBg.stroke({ color: 0xd97706, width: 1.5 })
+    labelBg.stroke({ color: 0xcbd5e1, width: 1 })
 
     nameText.x = -nameText.width / 2
     nameText.y = 22 + padY
@@ -238,9 +243,9 @@ export class StudentAvatar extends PIXI.Container {
     const bh = bubbleText.height + 14
 
     // Speech bubble box
-    bubbleBg.roundRect(-bw / 2, -48 - bh, bw, bh, 8)
+    bubbleBg.roundRect(-bw / 2, -48 - bh, bw, bh, 6)
     bubbleBg.fill({ color: 0xffffff })
-    bubbleBg.stroke({ color: 0xd97706, width: 2 })
+    bubbleBg.stroke({ color: 0xcbd5e1, width: 1 })
 
     // Speech pointer tail
     bubbleBg.poly([
